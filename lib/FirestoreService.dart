@@ -3,10 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _branchId = 'Old_Airport';
+  static const String _branchId = 'Mansoura';
 
   // Table Operations
-  static Future<void> updateTableStatus(String tableNumber, String status, {String? currentOrderId}) async {
+  static Future<void> updateTableStatus(
+    String tableNumber,
+    String status, {
+    String? currentOrderId,
+  }) async {
     final updateData = <String, dynamic>{
       'Tables.$tableNumber.status': status,
       'Tables.$tableNumber.statusTimestamp': FieldValue.serverTimestamp(),
@@ -52,7 +56,7 @@ class FirestoreService {
         'paymentStatus': 'unpaid',
         'timestamp': FieldValue.serverTimestamp(),
         'dailyOrderNumber': dailyOrderNumber,
-        'branchId': _branchId,
+        'branchIds': [_branchId],
       };
 
       // Set order data
@@ -84,9 +88,13 @@ class FirestoreService {
       }
 
       final orderData = orderDoc.data() as Map<String, dynamic>;
-      final currentItems = List<Map<String, dynamic>>.from(orderData['items'] ?? []);
-      final currentTotal = (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
-      final currentSubtotal = (orderData['subtotal'] as num?)?.toDouble() ?? 0.0;
+      final currentItems = List<Map<String, dynamic>>.from(
+        orderData['items'] ?? [],
+      );
+      final currentTotal =
+          (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      final currentSubtotal =
+          (orderData['subtotal'] as num?)?.toDouble() ?? 0.0;
 
       final mergedItems = _mergeOrderItems(currentItems, newItems);
       final newTotal = currentTotal + additionalAmount;
@@ -101,7 +109,11 @@ class FirestoreService {
     });
   }
 
-  static Future<void> updateOrderStatusWithTable(String orderId, String status, {String? tableNumber}) async {
+  static Future<void> updateOrderStatusWithTable(
+    String orderId,
+    String status, {
+    String? tableNumber,
+  }) async {
     await _firestore.runTransaction((transaction) async {
       final orderRef = _firestore.collection('Orders').doc(orderId);
       transaction.update(orderRef, {
@@ -154,7 +166,10 @@ class FirestoreService {
   }
 
   // Cart Operations
-  static Future<void> saveCartItems(String tableNumber, List<Map<String, dynamic>> items) async {
+  static Future<void> saveCartItems(
+    String tableNumber,
+    List<Map<String, dynamic>> items,
+  ) async {
     try {
       await _firestore.collection('carts').doc('table_$tableNumber').set({
         'items': items,
@@ -166,9 +181,14 @@ class FirestoreService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> loadCartItems(String tableNumber) async {
+  static Future<List<Map<String, dynamic>>> loadCartItems(
+    String tableNumber,
+  ) async {
     try {
-      final cartDoc = await _firestore.collection('carts').doc('table_$tableNumber').get();
+      final cartDoc = await _firestore
+          .collection('carts')
+          .doc('table_$tableNumber')
+          .get();
       if (cartDoc.exists) {
         final cartData = cartDoc.data() as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(cartData['items'] ?? []);
@@ -189,14 +209,18 @@ class FirestoreService {
 
   // Helper Methods
   static List<Map<String, dynamic>> _mergeOrderItems(
-      List<Map<String, dynamic>> existingItems, List<Map<String, dynamic>> newItems) {
+    List<Map<String, dynamic>> existingItems,
+    List<Map<String, dynamic>> newItems,
+  ) {
     final merged = List<Map<String, dynamic>>.from(existingItems);
 
     for (final newItem in newItems) {
-      final existingIndex = merged.indexWhere((item) =>
-      item['id'] == newItem['id'] &&
-          item['specialInstructions'] == newItem['specialInstructions'] &&
-          item['selectedVariant'] == newItem['selectedVariant']);
+      final existingIndex = merged.indexWhere(
+        (item) =>
+            item['id'] == newItem['id'] &&
+            item['specialInstructions'] == newItem['specialInstructions'] &&
+            item['selectedVariant'] == newItem['selectedVariant'],
+      );
 
       if (existingIndex >= 0) {
         merged[existingIndex]['quantity'] += newItem['quantity'];
@@ -219,7 +243,7 @@ class FirestoreService {
   static Stream<QuerySnapshot> getActiveOrdersStream(String orderType) {
     Query query = _firestore
         .collection('Orders')
-        .where('branchId', isEqualTo: _branchId)
+        .where('branchIds', arrayContains: _branchId)
         .where('status', whereIn: ['pending', 'preparing', 'prepared']);
 
     if (orderType != 'all') {

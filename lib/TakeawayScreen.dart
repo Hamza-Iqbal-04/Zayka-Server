@@ -59,7 +59,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
     try {
       final categoriesSnapshot = await _firestore
           .collection('menu_categories')
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .where('isActive', isEqualTo: true)
           .orderBy('sortOrder')
           .get();
@@ -100,7 +100,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             Text(
-              'Ready in 15-20 mins • Old Airport Branch',
+              'Ready in 15-20 mins • Mansoura Branch',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -481,7 +481,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
       stream: _firestore
           .collection('menu_items')
           .where('isAvailable', isEqualTo: true)
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -1920,7 +1920,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
         final orderRef = _firestore.collection('Orders').doc();
 
         final orderData = {
-          'orderType': 'takeaway',
+          'Order_type': 'takeaway',
           'carPlateNumber': _carPlateNumberController.text.trim(),
           'specialInstructions': _specialInstructionsController.text.trim(),
           'items': _cartItems,
@@ -1930,7 +1930,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
           'paymentStatus': 'unpaid',
           'timestamp': FieldValue.serverTimestamp(),
           'dailyOrderNumber': dailyOrderNumber,
-          'branchId': 'Old_Airport',
+          'branchIds': ['Mansoura'],
           'estimatedReadyTime': _calculateEstimatedTime(),
         };
 

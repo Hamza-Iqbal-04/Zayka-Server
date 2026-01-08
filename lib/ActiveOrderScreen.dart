@@ -76,6 +76,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     final double preferredHeight = innerTabHeight + systemBottom;
 
     return Scaffold(
+      backgroundColor: Color(0xFFF5F6F8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -109,33 +110,25 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                     child: TabBar(
                       controller: _tabController,
                       isScrollable: false,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicatorPadding: EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 0,
-                      ),
-                      indicator: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      labelColor: Colors.white,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      indicatorColor: primaryColor,
+                      indicatorWeight: 3,
+                      labelColor: primaryColor,
                       unselectedLabelColor: Colors.grey[600],
                       labelStyle: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        height: 1.0,
+                        fontSize: 12,
                       ),
                       unselectedLabelStyle: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 11,
-                        height: 1.0,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
                       ),
                       labelPadding: EdgeInsets.zero,
                       tabs: [
-                        _buildTabItem(Icons.restaurant_menu, 'All', 0),
-                        _buildTabItem(Icons.table_restaurant, 'Dine In', 1),
-                        _buildTabItem(Icons.shopping_bag, 'Takeaway', 2),
-                        _buildTabItem(Icons.check_circle, 'Completed', 3),
+                        Tab(text: 'All'),
+                        Tab(text: 'Dine In'),
+                        Tab(text: 'Takeaway'),
+                        Tab(text: 'Completed'),
                       ],
                     ),
                   ),
@@ -159,39 +152,6 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTabItem(IconData icon, String text, int index) {
-    final bool isSelected = _tabController.index == index;
-    return Tab(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? Colors.white : Colors.grey[600],
-            ),
-            SizedBox(height: 4),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 11,
-                height: 1.0,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -535,107 +495,47 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     final items = List<Map<String, dynamic>>.from(orderData['items'] ?? []);
     final statusColor = _getFirestoreStatusColor(status);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order)),
-          );
-        },
-        child: Container(
-          margin: EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: isPriority
-                    ? Colors.green.withOpacity(0.2)
-                    : Colors.black12,
-                blurRadius: isPriority ? 8 : 4,
-                offset: Offset(0, isPriority ? 4 : 2),
-              ),
-            ],
-            border: isPriority
-                ? Border.all(color: Colors.green, width: 2)
-                : null,
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
+        ],
+        border: isPriority ? Border.all(color: Colors.green, width: 2) : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OrderDetailScreen(order: order),
+              ),
+            );
+          },
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header: Order # and Status
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: orderType == 'takeaway'
-                            ? Colors.orange
-                            : Colors.blue,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        orderType == 'takeaway'
-                            ? Icons.shopping_bag
-                            : Icons.table_restaurant,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Order #$dailyOrderNumber',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                              if (isPriority) ...[
-                                SizedBox(width: 8),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'READY',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            orderType == 'takeaway'
-                                ? (carPlateNumber != null
-                                      ? 'Car: $carPlateNumber'
-                                      : (customerName != null
-                                            ? 'Customer: $customerName'
-                                            : 'Takeaway Order'))
-                                : 'Table: ${tableNumber ?? 'N/A'}',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
+                    Text(
+                      'Order #$dailyOrderNumber',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
                     Container(
@@ -646,7 +546,10 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor, width: 1),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.2),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         status.toUpperCase(),
@@ -654,82 +557,174 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                           color: statusColor,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 12),
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+
+                // Order Info: Type and Location
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: orderType == 'takeaway'
+                            ? Colors.orange.withOpacity(0.1)
+                            : Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.restaurant_menu,
-                            size: 16,
-                            color: Colors.grey,
+                            orderType == 'takeaway'
+                                ? Icons.shopping_bag_outlined
+                                : Icons.table_restaurant_outlined,
+                            size: 14,
+                            color: orderType == 'takeaway'
+                                ? Colors.orange[700]
+                                : Colors.blue[700],
                           ),
-                          SizedBox(width: 4),
+                          SizedBox(width: 6),
                           Text(
-                            '${items.length} item${items.length != 1 ? 's' : ''}',
+                            orderType == 'takeaway'
+                                ? (carPlateNumber != null
+                                      ? 'Car: $carPlateNumber'
+                                      : (customerName != null
+                                            ? 'Customer: $customerName'
+                                            : 'Takeaway'))
+                                : 'Table $tableNumber',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: orderType == 'takeaway'
+                                  ? Colors.orange[700]
+                                  : Colors.blue[700],
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        items
-                                .take(2)
-                                .map(
-                                  (item) =>
-                                      '${item['name']} (${item['quantity']})',
-                                )
-                                .join(', ') +
-                            (items.length > 2 ? '...' : ''),
-                        style: TextStyle(fontSize: 13, color: Colors.black87),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.access_time, size: 16, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          timestamp != null
-                              ? _formatTime(timestamp.toDate())
-                              : 'Unknown',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
                     ),
+                    Spacer(),
+                    Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                    SizedBox(width: 4),
                     Text(
-                      '\$${totalAmount.toStringAsFixed(2)}',
+                      timestamp != null
+                          ? _formatTime(timestamp.toDate())
+                          : 'Unknown',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: primaryColor,
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
+                SizedBox(height: 16),
+                Divider(height: 1, color: Colors.grey[200]),
+                SizedBox(height: 16),
+
+                // Items Summary
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${items.length} Items',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            items
+                                    .take(2)
+                                    .map(
+                                      (item) =>
+                                          '${item['quantity']}x ${item['name']}',
+                                    )
+                                    .join(', ') +
+                                (items.length > 2 ? '...' : ''),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'TOTAL',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '\$${totalAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (isPriority) ...[
+                  SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: Colors.green[700],
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ready to Serve',
+                          style: TextStyle(
+                            color: Colors.green[700],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -757,81 +752,46 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     final bool isPaid = status == 'paid' || paymentStatus == 'paid';
     final Color statusColor = isPaid ? Colors.green : Colors.blue;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => OrderDetailScreen(order: order)),
-          );
-        },
-        child: Container(
-          margin: EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OrderDetailScreen(order: order),
+              ),
+            );
+          },
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: orderType == 'takeaway'
-                            ? Colors.orange
-                            : Colors.blue,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        orderType == 'takeaway'
-                            ? Icons.shopping_bag
-                            : Icons.table_restaurant,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Order #$dailyOrderNumber',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            orderType == 'takeaway'
-                                ? (carPlateNumber != null
-                                      ? 'Car: $carPlateNumber'
-                                      : (customerName != null
-                                            ? 'Customer: $customerName'
-                                            : 'Takeaway Order'))
-                                : 'Table: ${tableNumber ?? 'N/A'}',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
+                    Text(
+                      'Order #$dailyOrderNumber',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
                     Container(
@@ -842,7 +802,10 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor, width: 1),
+                        border: Border.all(
+                          color: statusColor.withOpacity(0.2),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         isPaid ? 'PAID' : 'UNPAID',
@@ -850,103 +813,178 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                           color: statusColor,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 12),
+
+                // Order Details Row
                 Row(
                   children: [
-                    Chip(
-                      label: Text(
-                        orderType,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
                       ),
-                      backgroundColor: orderType == 'takeaway'
-                          ? Colors.orange
-                          : Colors.blue,
-                      visualDensity: VisualDensity.compact,
+                      decoration: BoxDecoration(
+                        color: orderType == 'takeaway'
+                            ? Colors.orange.withOpacity(0.1)
+                            : Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            orderType == 'takeaway'
+                                ? Icons.shopping_bag_outlined
+                                : Icons.table_restaurant_outlined,
+                            size: 14,
+                            color: orderType == 'takeaway'
+                                ? Colors.orange[700]
+                                : Colors.blue[700],
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            orderType == 'takeaway'
+                                ? (carPlateNumber != null
+                                      ? 'Car: $carPlateNumber'
+                                      : (customerName != null
+                                            ? 'Customer: $customerName'
+                                            : 'Takeaway'))
+                                : 'Table $tableNumber',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: orderType == 'takeaway'
+                                  ? Colors.orange[700]
+                                  : Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(width: 6),
-                    if (isPaid)
-                      Chip(
-                        label: Text(
-                          paymentMethod,
-                          style: TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                        backgroundColor: Colors.green,
-                        visualDensity: VisualDensity.compact,
+                    Spacer(),
+                    Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                    SizedBox(width: 4),
+                    Text(
+                      isPaid
+                          ? (paymentTime != null
+                                ? _formatTime(paymentTime.toDate())
+                                : _formatTime(
+                                    timestamp?.toDate() ?? DateTime.now(),
+                                  ))
+                          : (timestamp != null
+                                ? _formatTime(timestamp.toDate())
+                                : 'Unknown'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
                   ],
                 ),
-                SizedBox(height: 8),
-                Text(
-                  isPaid
-                      ? 'Paid At: ${paymentTime != null ? _formatDateTime(paymentTime.toDate()) : _formatDateTime(timestamp?.toDate() ?? DateTime.now())}'
-                      : 'Served At: ${timestamp != null ? _formatDateTime(timestamp.toDate()) : 'N/A'}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Divider(height: 16, thickness: 1, color: secondaryColor),
-                Column(
+                SizedBox(height: 16),
+                Divider(height: 1, color: Colors.grey[200]),
+                SizedBox(height: 16),
+
+                // Items Summary
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${items.length} Items',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            items
+                                    .take(2)
+                                    .map(
+                                      (item) =>
+                                          '${item['quantity']}x ${item['name']}',
+                                    )
+                                    .join(', ') +
+                                (items.length > 2 ? '...' : ''),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                Divider(height: 1, color: Colors.grey[200]),
+                SizedBox(height: 16),
+
+                // Footer Info
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.restaurant_menu,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(width: 4),
                         Text(
-                          '${items.length} item${items.length != 1 ? 's' : ''}',
+                          'PAYMENT METHOD',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          paymentMethod.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      items
-                              .take(2)
-                              .map(
-                                (item) =>
-                                    '${item['name']} x${item['quantity']}',
-                              )
-                              .join(', ') +
-                          (items.length > 2 ? '...' : ''),
-                      style: TextStyle(fontSize: 13, color: Colors.black87),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      '\$${totalAmount.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: primaryColor,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'TOTAL',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '\$${totalAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -965,7 +1003,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('Orders')
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .where('status', whereIn: ['paid', 'served'])
           .where(
             'timestamp',
@@ -1344,7 +1382,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
 
         // Update table status only for dine-in orders
         if (orderType == 'dine_in' && tableNumber != null) {
-          final branchRef = _firestore.collection('Branch').doc('Old_Airport');
+          final branchRef = _firestore.collection('Branch').doc('Mansoura');
           transaction.update(branchRef, {
             'Tables.$tableNumber.status': 'occupied',
           });
@@ -1379,7 +1417,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     try {
       Query query = _firestore
           .collection('Orders')
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .where('status', whereIn: ['pending', 'preparing', 'prepared']);
       if (orderType != 'all') {
         query = query.where('Order_type', isEqualTo: orderType);
@@ -1425,32 +1463,38 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     IconData icon,
   ) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [secondaryColor, Colors.white]),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 24),
-          SizedBox(height: 8),
           Text(
             count.toString(),
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: color,
+              height: 1.0,
             ),
           ),
+          SizedBox(height: 8),
           Text(
             title,
             style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -1557,16 +1601,9 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
 
     if (diff.inMinutes < 60) {
       return '${diff.inMinutes}m ago';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
     } else {
       return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}';
     }
-  }
-
-  String _formatDateTime(DateTime dt) {
-    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
 
@@ -1606,6 +1643,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final paymentMethod = orderData['paymentMethod']?.toString();
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           'Order Details',
@@ -1622,14 +1660,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [primaryColor, Colors.white],
-            stops: [0.0, 0.3],
-          ),
-        ),
+        color: Colors.white,
         child: Column(
           children: [
             // Order Header Card
@@ -2633,7 +2664,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
           await FirebaseFirestore.instance
               .collection('Branch')
-              .doc('Old_Airport')
+              .doc('Mansoura')
               .update(tableUpdate);
         }
       }

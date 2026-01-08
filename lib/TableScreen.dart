@@ -1,6 +1,3 @@
-
-
-
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +14,6 @@ class TablesScreen extends StatefulWidget {
   @override
   _TablesScreenState createState() => _TablesScreenState();
 }
-
 
 class TableStatusInfo {
   final Color color;
@@ -67,15 +63,9 @@ class _TablesScreenState extends State<TablesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.grey[50]!, Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        color: Color(0xFFF5F6F8),
         child: StreamBuilder<DocumentSnapshot>(
-          stream: _firestore.collection('Branch').doc('Old_Airport').snapshots(),
+          stream: _firestore.collection('Branch').doc('Mansoura').snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return _buildErrorState();
@@ -137,10 +127,7 @@ class _TablesScreenState extends State<TablesScreen>
           SizedBox(height: 8),
           Text(
             'Unable to load restaurant tables',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           SizedBox(height: 24),
           ElevatedButton.icon(
@@ -186,10 +173,7 @@ class _TablesScreenState extends State<TablesScreen>
           SizedBox(height: 8),
           Text(
             'Please wait while we fetch the latest data',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -200,39 +184,59 @@ class _TablesScreenState extends State<TablesScreen>
     return SliverAppBar(
       pinned: true,
       floating: false,
-      expandedHeight: 140.0,
-      backgroundColor: primaryColor,
+      expandedHeight: 100.0,
+      backgroundColor: Colors.white,
       automaticallyImplyLeading: false,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.only(left: 20, bottom: 20),
-        title: Text(
-          'Restaurant Tables',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.white,
-            shadows: [
-              Shadow(
-                offset: Offset(0, 1),
-                blurRadius: 3,
-                color: Colors.black26,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              'Restaurant Tables',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Colors.black87,
+                height: 1.0,
               ),
-            ],
-          ),
-        ),
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primaryColor,
-                primaryColor.withOpacity(0.8),
-                primaryColor.withOpacity(0.6),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-          ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.store_rounded, color: primaryColor, size: 14),
+                SizedBox(width: 4),
+                Text(
+                  'Branch: Mansoura',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        background: Stack(
+          children: [
+            Container(color: Colors.white),
+            Positioned(
+              right: -30,
+              top: -20,
+              child: Transform.rotate(
+                angle: -0.2,
+                child: Icon(
+                  Icons.table_restaurant_rounded,
+                  size: 180,
+                  color: primaryColor.withOpacity(0.05),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       actions: [
@@ -242,16 +246,26 @@ class _TablesScreenState extends State<TablesScreen>
             return Transform.rotate(
               angle: _refreshController.value * 2 * 3.14159,
               child: IconButton(
-                icon: Icon(Icons.refresh_rounded, color: Colors.white, size: 26),
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  color: primaryColor,
+                  size: 26,
+                ),
                 onPressed: _handleRefresh,
               ),
             );
           },
         ),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert_rounded, color: Colors.white, size: 26),
+          icon: Icon(
+            Icons.more_vert_rounded,
+            color: Colors.grey[800],
+            size: 26,
+          ),
           offset: Offset(0, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           onSelected: (value) {
             if (value == 'logout') {
               _showLogoutDialog(context);
@@ -264,7 +278,13 @@ class _TablesScreenState extends State<TablesScreen>
                 children: [
                   Icon(Icons.logout_rounded, color: Colors.red, size: 20),
                   SizedBox(width: 12),
-                  Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w500)),
+                  Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -301,13 +321,26 @@ class _TablesScreenState extends State<TablesScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildQuickStat('Total', tables.length, primaryColor, Icons.restaurant),
+                    _buildQuickStat(
+                      'Total',
+                      tables.length,
+                      Colors.grey[800]!,
+                      Icons.grid_view_rounded,
+                    ),
                     _buildVerticalDivider(),
-                    _buildQuickStat('Available', _getStatusCount(tables, 'available'), Colors.green, Icons.check_circle),
+                    _buildQuickStat(
+                      'Available',
+                      _getStatusCount(tables, 'available'),
+                      Colors.green,
+                      Icons.check_circle_outline,
+                    ),
                     _buildVerticalDivider(),
-                    // _buildQuickStat('Occupied', _getStatusCount(tables, 'occupied'), Colors.red, Icons.group),
-                    // _buildVerticalDivider(),
-                    _buildQuickStat('Ordered', _getStatusCount(tables, 'ordered'), Colors.blue, Icons.restaurant_menu),
+                    _buildQuickStat(
+                      'Ordered',
+                      _getStatusCount(tables, 'ordered'),
+                      Colors.blue,
+                      Icons.restaurant_menu,
+                    ),
                   ],
                 ),
               ),
@@ -319,39 +352,29 @@ class _TablesScreenState extends State<TablesScreen>
   }
 
   Widget _buildVerticalDivider() {
-    return Container(
-      height: 40,
-      width: 1,
-      color: Colors.grey[300],
-    );
+    return Container(height: 40, width: 1, color: Colors.grey[300]);
   }
 
   Widget _buildQuickStat(String label, int count, Color color, IconData icon) {
     return Column(
       children: [
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        SizedBox(height: 8),
         Text(
           count.toString(),
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: color,
+            height: 1.0,
           ),
         ),
+        SizedBox(height: 6),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: Colors.grey[600],
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -361,9 +384,16 @@ class _TablesScreenState extends State<TablesScreen>
   Widget _buildFilterChips(Map<String, dynamic> tables) {
     final filterData = [
       {'label': 'All', 'value': 'all', 'count': tables.length},
-      {'label': 'Available', 'value': 'available', 'count': _getStatusCount(tables, 'available')},
-      {'label': 'Occupied', 'value': 'occupied', 'count': _getStatusCount(tables, 'occupied')},
-      {'label': 'Ordered', 'value': 'ordered', 'count': _getStatusCount(tables, 'ordered')},
+      {
+        'label': 'Available',
+        'value': 'available',
+        'count': _getStatusCount(tables, 'available'),
+      },
+      {
+        'label': 'Ordered',
+        'value': 'ordered',
+        'count': _getStatusCount(tables, 'ordered'),
+      },
     ];
 
     return SliverToBoxAdapter(
@@ -391,18 +421,21 @@ class _TablesScreenState extends State<TablesScreen>
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected ? primaryColor : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? primaryColor : Colors.grey[300]!,
-                      width: 1.5,
-                    ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ] : [],
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      if (isSelected)
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        )
+                      else
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -417,9 +450,14 @@ class _TablesScreenState extends State<TablesScreen>
                       ),
                       SizedBox(width: 6),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white.withOpacity(0.2) : primaryColor.withOpacity(0.1),
+                          color: isSelected
+                              ? Colors.white.withOpacity(0.2)
+                              : primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -516,19 +554,17 @@ class _TablesScreenState extends State<TablesScreen>
           crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.7, // Changed from 0.85 to 0.7 to make cards taller
+          childAspectRatio:
+              0.7, // Changed from 0.85 to 0.7 to make cards taller
         ),
-        delegate: SliverChildBuilderDelegate(
-              (context, index) {
-            final entry = filteredTables[index];
-            return _buildTableCard(
-              context,
-              entry.key,
-              entry.value as Map<String, dynamic>,
-            );
-          },
-          childCount: filteredTables.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final entry = filteredTables[index];
+          return _buildTableCard(
+            context,
+            entry.key,
+            entry.value as Map<String, dynamic>,
+          );
+        }, childCount: filteredTables.length),
       ),
     );
   }
@@ -537,115 +573,106 @@ class _TablesScreenState extends State<TablesScreen>
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-              (context, index) {
-            final entry = filteredTables[index];
-            return Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: _buildTableListItem(
-                context,
-                entry.key,
-                entry.value as Map<String, dynamic>,
-              ),
-            );
-          },
-          childCount: filteredTables.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final entry = filteredTables[index];
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: _buildTableListItem(
+              context,
+              entry.key,
+              entry.value as Map<String, dynamic>,
+            ),
+          );
+        }, childCount: filteredTables.length),
       ),
     );
   }
 
-  Widget _buildTableCard(BuildContext context, String tableNumber, Map<String, dynamic> tableData) {
+  Widget _buildTableCard(
+    BuildContext context,
+    String tableNumber,
+    Map<String, dynamic> tableData,
+  ) {
     final status = tableData['status']?.toString() ?? 'available';
     final seats = tableData['seats']?.toString() ?? '0';
     final currentOrderId = tableData['currentOrderId']?.toString();
     final tableInfo = _getTableStatusInfo(status);
 
     return GestureDetector(
-      onTap: () => _navigateToOrderScreen(context, tableNumber, tableData, currentOrderId, status),
+      onTap: () => _navigateToOrderScreen(
+        context,
+        tableNumber,
+        tableData,
+        currentOrderId,
+        status,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: tableInfo.color.withOpacity(0.15),
-              blurRadius: 12,
-              offset: Offset(0, 6),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
-          border: Border.all(
-            color: tableInfo.color.withOpacity(0.2),
-            width: 1.5,
-          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Status Dot
             Container(
-              width: 50,
-              height: 50,
+              margin: EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    tableInfo.color,
-                    tableInfo.color.withOpacity(0.7),
-                  ],
-                ),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: tableInfo.color.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+                border: Border.all(
+                  color: tableInfo.color.withOpacity(0.2),
+                  width: 2,
+                ),
               ),
-              child: Icon(
-                tableInfo.icon,
-                color: Colors.white,
-                size: 24,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: tableInfo.color,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-            SizedBox(height: 12),
+
             Text(
               'Table $tableNumber',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.grey[800],
+                fontSize: 18,
+                color: Colors.black87,
               ),
             ),
+            SizedBox(height: 4),
             Text(
               '$seats Seats',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: Colors.grey[500],
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    tableInfo.color.withOpacity(0.1),
-                    tableInfo.color.withOpacity(0.05),
-                  ],
-                ),
+                color: tableInfo.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: tableInfo.color.withOpacity(0.3),
-                  width: 1,
-                ),
               ),
               child: Text(
-                tableInfo.statusText,
+                tableInfo.statusText.toUpperCase(),
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
                   color: tableInfo.color,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -655,45 +682,59 @@ class _TablesScreenState extends State<TablesScreen>
     );
   }
 
-  Widget _buildTableListItem(BuildContext context, String tableNumber, Map<String, dynamic> tableData) {
+  Widget _buildTableListItem(
+    BuildContext context,
+    String tableNumber,
+    Map<String, dynamic> tableData,
+  ) {
     final status = tableData['status']?.toString() ?? 'available';
     final seats = tableData['seats']?.toString() ?? '0';
     final currentOrderId = tableData['currentOrderId']?.toString();
     final tableInfo = _getTableStatusInfo(status);
 
     return GestureDetector(
-      onTap: () => _navigateToOrderScreen(context, tableNumber, tableData, currentOrderId, status),
+      onTap: () => _navigateToOrderScreen(
+        context,
+        tableNumber,
+        tableData,
+        currentOrderId,
+        status,
+      ),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: tableInfo.color.withOpacity(0.2),
-            width: 1.5,
-          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
+            // Status Dot
             Container(
-              width: 50,
-              height: 50,
+              padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [tableInfo.color, tableInfo.color.withOpacity(0.7)],
-                ),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: tableInfo.color.withOpacity(0.2),
+                  width: 2,
+                ),
               ),
-              child: Icon(tableInfo.icon, color: Colors.white, size: 24),
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: tableInfo.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
-            SizedBox(width: 16),
+            SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -702,44 +743,43 @@ class _TablesScreenState extends State<TablesScreen>
                     'Table $tableNumber',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.grey[800],
+                      fontSize: 18,
+                      color: Colors.black87,
                     ),
                   ),
-                  Text(
-                    '$seats Seats',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.chair_alt_outlined,
+                        size: 14,
+                        color: Colors.grey[500],
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        '$seats Seats',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: tableInfo.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: tableInfo.color.withOpacity(0.3),
-                  width: 1,
-                ),
               ),
               child: Text(
-                tableInfo.statusText,
+                tableInfo.statusText.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
                   color: tableInfo.color,
+                  letterSpacing: 0.5,
                 ),
               ),
-            ),
-            SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.grey[400],
-              size: 16,
             ),
           ],
         ),
@@ -747,8 +787,13 @@ class _TablesScreenState extends State<TablesScreen>
     );
   }
 
-  void _navigateToOrderScreen(BuildContext context, String tableNumber,
-      Map<String, dynamic> tableData, String? currentOrderId, String status) {
+  void _navigateToOrderScreen(
+    BuildContext context,
+    String tableNumber,
+    Map<String, dynamic> tableData,
+    String? currentOrderId,
+    String status,
+  ) {
     HapticFeedback.lightImpact();
     Navigator.push(
       context,
@@ -763,7 +808,9 @@ class _TablesScreenState extends State<TablesScreen>
     );
   }
 
-  List<MapEntry<String, dynamic>> _getFilteredTablesList(Map<String, dynamic> tables) {
+  List<MapEntry<String, dynamic>> _getFilteredTablesList(
+    Map<String, dynamic> tables,
+  ) {
     if (_selectedFilter == 'all') {
       return tables.entries.toList();
     }
@@ -850,7 +897,9 @@ class _TablesScreenState extends State<TablesScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red[600],
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text('Sign Out'),
           ),
@@ -915,8 +964,10 @@ class _OrderScreenState extends State<OrderScreen> {
   void initState() {
     super.initState();
     _tableStatus = widget.tableData['status']?.toString() ?? 'available';
-    _currentOrderId = widget.existingOrderId ?? widget.tableData['currentOrderId'];
-    _isAddingToExistingOrder = widget.isAddingToExisting || (_currentOrderId != null);
+    _currentOrderId =
+        widget.existingOrderId ?? widget.tableData['currentOrderId'];
+    _isAddingToExistingOrder =
+        widget.isAddingToExisting || (_currentOrderId != null);
 
     _initializeData();
     _startOrResetTimer();
@@ -940,7 +991,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void _setupListeners() {
     // Single listener for table status
-    _tableStatusSubscription = FirestoreService.getBranchStream().listen((snapshot) {
+    _tableStatusSubscription = FirestoreService.getBranchStream().listen((
+      snapshot,
+    ) {
       if (snapshot.exists && mounted) {
         _handleBranchUpdate(snapshot);
       }
@@ -1040,7 +1093,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
       // Clear persisted cart
       await FirestoreService.clearCart(widget.tableNumber);
-
     } on FirebaseException catch (e) {
       _showErrorSnackbar('Order failed: ${e.message}');
     } catch (e) {
@@ -1061,7 +1113,8 @@ class _OrderScreenState extends State<OrderScreen> {
 
       if (orderDoc.exists) {
         final orderData = orderDoc.data() as Map<String, dynamic>;
-        final totalAmount = (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        final totalAmount =
+            (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
         final orderType = orderData['Order_type']?.toString() ?? 'dine_in';
 
         await FirestoreService.processPayment(
@@ -1080,7 +1133,9 @@ class _OrderScreenState extends State<OrderScreen> {
           _currentPaymentStatus = 'unpaid';
         });
 
-        _showSuccessSnackbar('Payment processed successfully with ${paymentMethod.toUpperCase()}!');
+        _showSuccessSnackbar(
+          'Payment processed successfully with ${paymentMethod.toUpperCase()}!',
+        );
         Navigator.pop(context);
       }
     } on FirebaseException catch (e) {
@@ -1101,7 +1156,10 @@ class _OrderScreenState extends State<OrderScreen> {
 
     try {
       if (_tableStatus == 'available') {
-        await FirestoreService.updateTableStatus(widget.tableNumber, 'occupied');
+        await FirestoreService.updateTableStatus(
+          widget.tableNumber,
+          'occupied',
+        );
         _showSuccessSnackbar('Table ${widget.tableNumber} marked as occupied!');
       } else {
         if (_tableStatus == 'occupied' || _tableStatus == 'ordered') {
@@ -1162,7 +1220,6 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -1171,8 +1228,6 @@ class _OrderScreenState extends State<OrderScreen> {
     _timer?.cancel();
     super.dispose();
   }
-
-
 
   // Updated to track order status and payment status
   void _listenToExistingOrder() {
@@ -1184,28 +1239,34 @@ class _OrderScreenState extends State<OrderScreen> {
         .doc(_currentOrderId)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists && mounted) {
-        final orderData = snapshot.data() as Map<String, dynamic>;
-        final items = List<Map<String, dynamic>>.from(orderData['items'] ?? []);
-        final status = orderData['status']?.toString() ?? '';
-        final paymentStatus = orderData['paymentStatus']?.toString() ?? 'unpaid';
+          if (snapshot.exists && mounted) {
+            final orderData = snapshot.data() as Map<String, dynamic>;
+            final items = List<Map<String, dynamic>>.from(
+              orderData['items'] ?? [],
+            );
+            final status = orderData['status']?.toString() ?? '';
+            final paymentStatus =
+                orderData['paymentStatus']?.toString() ?? 'unpaid';
 
-        setState(() {
-          _existingOrderItems = items;
-          _currentOrderStatus = status;
-          _currentPaymentStatus = paymentStatus;
+            setState(() {
+              _existingOrderItems = items;
+              _currentOrderStatus = status;
+              _currentPaymentStatus = paymentStatus;
+            });
+          }
         });
-      }
-    });
   }
 
   Future<void> _saveCartItems() async {
     try {
-      await _firestore.collection('carts').doc('table_${widget.tableNumber}').set({
-        'items': _cartItems,
-        'lastUpdated': Timestamp.now(),
-        'tableNumber': widget.tableNumber,
-      });
+      await _firestore
+          .collection('carts')
+          .doc('table_${widget.tableNumber}')
+          .set({
+            'items': _cartItems,
+            'lastUpdated': Timestamp.now(),
+            'tableNumber': widget.tableNumber,
+          });
     } catch (e) {
       print('Error saving cart items: $e');
     }
@@ -1219,19 +1280,21 @@ class _OrderScreenState extends State<OrderScreen> {
       // Load categories
       final categoriesSnapshot = await _firestore
           .collection('menu_categories')
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .where('isActive', isEqualTo: true)
           .orderBy('sortOrder')
           .get();
 
       setState(() {
         _categories = categoriesSnapshot.docs
-            .map((doc) => {
-          'id': doc.id,
-          'name': doc.data()['name'] ?? 'Unknown',
-          'imageUrl': doc.data()['imageUrl'] ?? '',
-          'sortOrder': doc.data()['sortOrder'] ?? 0,
-        })
+            .map(
+              (doc) => {
+                'id': doc.id,
+                'name': doc.data()['name'] ?? 'Unknown',
+                'imageUrl': doc.data()['imageUrl'] ?? '',
+                'sortOrder': doc.data()['sortOrder'] ?? 0,
+              },
+            )
             .toList();
         _isLoadingCategories = false;
 
@@ -1240,7 +1303,6 @@ class _OrderScreenState extends State<OrderScreen> {
           _expandedCategories.add(_categories[0]['name']);
         }
       });
-
     } catch (e) {
       print('Error loading categories: $e');
       setState(() => _isLoadingCategories = false);
@@ -1303,7 +1365,6 @@ class _OrderScreenState extends State<OrderScreen> {
     }
   }
 
-
   void _showMarkAvailableDialog() {
     showDialog(
       context: context,
@@ -1318,7 +1379,7 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
           content: Text(
             'Are you sure you want to mark Table ${widget.tableNumber} as available?\n\n'
-                'This will clear any pending orders and reset the table status.',
+            'This will clear any pending orders and reset the table status.',
           ),
           actions: [
             TextButton(
@@ -1347,7 +1408,6 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
-
   // Add navigation to OrderDetailScreen
   void _navigateToOrderDetail() {
     if (_currentOrderId == null) return;
@@ -1358,32 +1418,34 @@ class _OrderScreenState extends State<OrderScreen> {
         .limit(1)
         .get()
         .then((querySnapshot) {
-      if (querySnapshot.docs.isNotEmpty) {
-        final orderDoc = querySnapshot.docs.first; // This is QueryDocumentSnapshot
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderDetailScreen(order: orderDoc),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order not found'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }).catchError((e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading order details: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    });
+          if (querySnapshot.docs.isNotEmpty) {
+            final orderDoc =
+                querySnapshot.docs.first; // This is QueryDocumentSnapshot
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OrderDetailScreen(order: orderDoc),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Order not found'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        })
+        .catchError((e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading order details: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        });
   }
 
   @override
@@ -1403,10 +1465,7 @@ class _OrderScreenState extends State<OrderScreen> {
               _isAddingToExistingOrder
                   ? 'Add to Table ${widget.tableNumber} Order'
                   : 'Table ${widget.tableNumber} Order',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               overflow: TextOverflow.ellipsis,
             ),
             Row(
@@ -1457,24 +1516,24 @@ class _OrderScreenState extends State<OrderScreen> {
             margin: EdgeInsets.only(right: 8),
             child: _isToggling
                 ? Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              ),
-            )
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
                 : Switch(
-              value: _tableStatus == 'available',
-              onChanged: (_) => _toggleTableAvailability(),
-              activeColor: Colors.green,
-              inactiveThumbColor: Colors.orange,
-              inactiveTrackColor: Colors.orange.withOpacity(0.3),
-              activeTrackColor: Colors.green.withOpacity(0.3),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
+                    value: _tableStatus == 'available',
+                    onChanged: (_) => _toggleTableAvailability(),
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.orange,
+                    inactiveTrackColor: Colors.orange.withOpacity(0.3),
+                    activeTrackColor: Colors.green.withOpacity(0.3),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
           ),
           IconButton(
             icon: Icon(Icons.info_outline),
@@ -1484,13 +1543,7 @@ class _OrderScreenState extends State<OrderScreen> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, secondaryColor],
-          ),
-        ),
+        color: Colors.white,
         child: Column(
           children: [
             if (_isAddingToExistingOrder && _existingOrderItems.isNotEmpty)
@@ -1500,7 +1553,8 @@ class _OrderScreenState extends State<OrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_cartItems.isEmpty && !_isAddingToExistingOrder) _buildEmptyCart(),
+                  if (_cartItems.isEmpty && !_isAddingToExistingOrder)
+                    _buildEmptyCart(),
                   _buildSearchBar(),
                   Expanded(child: _buildMenuList()),
                 ],
@@ -1510,32 +1564,34 @@ class _OrderScreenState extends State<OrderScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _categories.isNotEmpty ? FloatingActionButton.extended(
-        onPressed: () {
-          setState(() {
-            if (_expandedCategories.length == _categories.length) {
-              _expandedCategories.clear(); // Collapse all
-            } else {
-              _expandedCategories = _categories
-                  .map((cat) => cat['name'] as String)
-                  .toSet(); // Expand all
-            }
-          });
-        },
-        backgroundColor: primaryColor,
-        icon: Icon(
-          _expandedCategories.length == _categories.length
-              ? Icons.expand_less
-              : Icons.expand_more,
-          color: Colors.white,
-        ),
-        label: Text(
-          _expandedCategories.length == _categories.length
-              ? 'Collapse All'
-              : 'Expand All',
-          style: TextStyle(color: Colors.white),
-        ),
-      ) : null,
+      floatingActionButton: _categories.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                setState(() {
+                  if (_expandedCategories.length == _categories.length) {
+                    _expandedCategories.clear(); // Collapse all
+                  } else {
+                    _expandedCategories = _categories
+                        .map((cat) => cat['name'] as String)
+                        .toSet(); // Expand all
+                  }
+                });
+              },
+              backgroundColor: primaryColor,
+              icon: Icon(
+                _expandedCategories.length == _categories.length
+                    ? Icons.expand_less
+                    : Icons.expand_more,
+                color: Colors.white,
+              ),
+              label: Text(
+                _expandedCategories.length == _categories.length
+                    ? 'Collapse All'
+                    : 'Expand All',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          : null,
     );
   }
 
@@ -1556,15 +1612,25 @@ class _OrderScreenState extends State<OrderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildInfoRow(
-                  'Status', _getStatusDisplayText(_tableStatus), _getStatusColor(_tableStatus)),
+                'Status',
+                _getStatusDisplayText(_tableStatus),
+                _getStatusColor(_tableStatus),
+              ),
               SizedBox(height: 8),
-              _buildInfoRow('Current Order',
-                  _existingOrderItems.isNotEmpty ? 'Yes' : 'No', null),
+              _buildInfoRow(
+                'Current Order',
+                _existingOrderItems.isNotEmpty ? 'Yes' : 'No',
+                null,
+              ),
               SizedBox(height: 8),
               _buildInfoRow('Items in Cart', '${_cartItems.length}', null),
               if (_totalAmount > 0) ...[
                 SizedBox(height: 8),
-                _buildInfoRow('Cart Total', 'QAR ${_totalAmount.toStringAsFixed(2)}', null),
+                _buildInfoRow(
+                  'Cart Total',
+                  'QAR ${_totalAmount.toStringAsFixed(2)}',
+                  null,
+                ),
               ],
               if (_tableStatus == 'occupied' || _tableStatus == 'ordered') ...[
                 SizedBox(height: 8),
@@ -1587,10 +1653,7 @@ class _OrderScreenState extends State<OrderScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '$label:',
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
+        Text('$label:', style: TextStyle(fontWeight: FontWeight.w500)),
         Text(
           value,
           style: TextStyle(
@@ -1609,11 +1672,7 @@ class _OrderScreenState extends State<OrderScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: TextField(
@@ -1624,14 +1683,14 @@ class _OrderScreenState extends State<OrderScreen> {
           prefixIcon: Icon(Icons.search, color: primaryColor),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: Icon(Icons.clear, color: Colors.grey),
-            onPressed: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
-          )
+                  icon: Icon(Icons.clear, color: Colors.grey),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -1653,7 +1712,9 @@ class _OrderScreenState extends State<OrderScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.blue[50],
-          border: Border(bottom: BorderSide(color: primaryColor.withOpacity(0.2))),
+          border: Border(
+            bottom: BorderSide(color: primaryColor.withOpacity(0.2)),
+          ),
         ),
         padding: EdgeInsets.all(12),
         child: Column(
@@ -1673,9 +1734,13 @@ class _OrderScreenState extends State<OrderScreen> {
                 Spacer(),
                 Row(
                   children: [
-                    if (_currentOrderStatus == 'served' && _currentPaymentStatus == 'unpaid')
+                    if (_currentOrderStatus == 'served' &&
+                        _currentPaymentStatus == 'unpaid')
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
@@ -1731,11 +1796,7 @@ class _OrderScreenState extends State<OrderScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
@@ -1746,7 +1807,9 @@ class _OrderScreenState extends State<OrderScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _isAddingToExistingOrder ? 'Additional Items' : 'Current Order',
+                  _isAddingToExistingOrder
+                      ? 'Additional Items'
+                      : 'Current Order',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1816,9 +1879,11 @@ class _OrderScreenState extends State<OrderScreen> {
                                 fontSize: 12,
                               ),
                             ),
-                            if (item['specialInstructions'] != null && item['specialInstructions'].isNotEmpty)
+                            if (item['specialInstructions'] != null &&
+                                item['specialInstructions'].isNotEmpty)
                               SizedBox(height: 4),
-                            if (item['specialInstructions'] != null && item['specialInstructions'].isNotEmpty)
+                            if (item['specialInstructions'] != null &&
+                                item['specialInstructions'].isNotEmpty)
                               Text(
                                 'Special: ${item['specialInstructions']}',
                                 style: TextStyle(
@@ -1843,13 +1908,19 @@ class _OrderScreenState extends State<OrderScreen> {
                                   color: Colors.grey[200],
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.remove, size: 18, color: Colors.grey[700]),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 18,
+                                  color: Colors.grey[700],
+                                ),
                               ),
                             ),
                             SizedBox(width: 12),
                             Container(
-                              padding:
-                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 color: primaryColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
@@ -1873,7 +1944,11 @@ class _OrderScreenState extends State<OrderScreen> {
                                   color: primaryColor.withOpacity(0.2),
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.add, size: 18, color: primaryColor),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 18,
+                                  color: primaryColor,
+                                ),
                               ),
                             ),
                           ],
@@ -1905,17 +1980,11 @@ class _OrderScreenState extends State<OrderScreen> {
             SizedBox(height: 8),
             Text(
               'Your cart is empty',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             Text(
               'Add items from the menu below',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -1933,7 +2002,7 @@ class _OrderScreenState extends State<OrderScreen> {
       stream: _firestore
           .collection('menu_items')
           .where('isAvailable', isEqualTo: true)
-          .where('branchId', isEqualTo: 'Old_Airport')
+          .where('branchIds', arrayContains: 'Mansoura')
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -1947,7 +2016,8 @@ class _OrderScreenState extends State<OrderScreen> {
           if (_searchQuery.isEmpty) return true;
           final itemData = item.data() as Map<String, dynamic>;
           final name = itemData['name']?.toString().toLowerCase() ?? '';
-          final description = itemData['description']?.toString().toLowerCase() ?? '';
+          final description =
+              itemData['description']?.toString().toLowerCase() ?? '';
           final category = itemData['category']?.toString().toLowerCase() ?? '';
 
           return name.contains(_searchQuery) ||
@@ -1973,13 +2043,16 @@ class _OrderScreenState extends State<OrderScreen> {
         // Then add items to their respective categories
         for (var item in filteredItems) {
           final itemData = item.data() as Map<String, dynamic>;
-          final itemCategoryId = itemData['categoryId']?.toString(); // Try categoryId first
-          final itemCategoryName = itemData['category']?.toString(); // Then try category name
+          final itemCategoryId = itemData['categoryId']
+              ?.toString(); // Try categoryId first
+          final itemCategoryName = itemData['category']
+              ?.toString(); // Then try category name
 
           bool itemCategorized = false;
 
           // Try to match by category ID
-          if (itemCategoryId != null && categorizedItems.containsKey(itemCategoryId)) {
+          if (itemCategoryId != null &&
+              categorizedItems.containsKey(itemCategoryId)) {
             categorizedItems[itemCategoryId]!.add(item);
             itemCategorized = true;
           }
@@ -2002,7 +2075,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
         return ListView.builder(
           padding: EdgeInsets.all(16),
-          itemCount: _categories.length + (categorizedItems['other']!.isNotEmpty ? 1 : 0),
+          itemCount:
+              _categories.length +
+              (categorizedItems['other']!.isNotEmpty ? 1 : 0),
           itemBuilder: (context, index) {
             if (index < _categories.length) {
               final category = _categories[index];
@@ -2024,7 +2099,6 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-
   Widget _buildNoResultsWidget() {
     return Center(
       child: Column(
@@ -2032,15 +2106,24 @@ class _OrderScreenState extends State<OrderScreen> {
         children: [
           Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
           SizedBox(height: 16),
-          Text('No dishes found', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
+          Text(
+            'No dishes found',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          ),
           SizedBox(height: 8),
-          Text('Try searching with different keywords', style: TextStyle(color: Colors.grey[500])),
+          Text(
+            'Try searching with different keywords',
+            style: TextStyle(color: Colors.grey[500]),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategorySection(Map<String, dynamic> category, List<QueryDocumentSnapshot> items) {
+  Widget _buildCategorySection(
+    Map<String, dynamic> category,
+    List<QueryDocumentSnapshot> items,
+  ) {
     final categoryName = category['name'];
     final imageUrl = category['imageUrl'];
     final isExpanded = _expandedCategories.contains(categoryName);
@@ -2055,15 +2138,17 @@ class _OrderScreenState extends State<OrderScreen> {
         children: [
           // Category Header (always visible)
           InkWell(
-            onTap: hasItems ? () {
-              setState(() {
-                if (isExpanded) {
-                  _expandedCategories.remove(categoryName);
-                } else {
-                  _expandedCategories.add(categoryName);
-                }
-              });
-            } : null,
+            onTap: hasItems
+                ? () {
+                    setState(() {
+                      if (isExpanded) {
+                        _expandedCategories.remove(categoryName);
+                      } else {
+                        _expandedCategories.add(categoryName);
+                      }
+                    });
+                  }
+                : null,
             borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: EdgeInsets.all(16),
@@ -2082,12 +2167,20 @@ class _OrderScreenState extends State<OrderScreen> {
                       borderRadius: BorderRadius.circular(8),
                       child: imageUrl.isNotEmpty
                           ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Icon(Icons.restaurant_menu, color: primaryColor, size: 24),
-                      )
-                          : Icon(Icons.restaurant_menu, color: primaryColor, size: 24),
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Icons.restaurant_menu,
+                                    color: primaryColor,
+                                    size: 24,
+                                  ),
+                            )
+                          : Icon(
+                              Icons.restaurant_menu,
+                              color: primaryColor,
+                              size: 24,
+                            ),
                     ),
                   ),
                   SizedBox(width: 16),
@@ -2099,12 +2192,19 @@ class _OrderScreenState extends State<OrderScreen> {
                       children: [
                         Text(
                           categoryName,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
                         ),
                         if (hasItems)
                           Text(
                             '${items.length} item${items.length != 1 ? 's' : ''}',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
                           ),
                       ],
                     ),
@@ -2115,15 +2215,25 @@ class _OrderScreenState extends State<OrderScreen> {
                     AnimatedRotation(
                       turns: isExpanded ? 0.5 : 0,
                       duration: Duration(milliseconds: 200),
-                      child: Icon(Icons.keyboard_arrow_down, color: primaryColor, size: 28),
+                      child: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: primaryColor,
+                        size: 28,
+                      ),
                     ),
 
                   // No items indicator
                   if (!hasItems)
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
-                      child: Text('No items', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'No items',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
                     ),
                 ],
               ),
@@ -2133,8 +2243,12 @@ class _OrderScreenState extends State<OrderScreen> {
           // Expandable Items Section
           AnimatedCrossFade(
             firstChild: SizedBox.shrink(),
-            secondChild: hasItems ? _buildCategoryItems(items) : SizedBox.shrink(),
-            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            secondChild: hasItems
+                ? _buildCategoryItems(items)
+                : SizedBox.shrink(),
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: Duration(milliseconds: 300),
           ),
         ],
@@ -2170,17 +2284,15 @@ class _OrderScreenState extends State<OrderScreen> {
     final imageUrl = itemData['imageUrl']?.toString();
     final estimatedTime = itemData['EstimatedTime']?.toString() ?? '';
     final isPopular = itemData['isPopular'] ?? false;
-    final hasVariants = itemData['variants'] != null &&
+    final hasVariants =
+        itemData['variants'] != null &&
         itemData['variants'] is Map &&
         (itemData['variants'] as Map).isNotEmpty;
 
-
     return Card(
       elevation: 2,
-        color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2198,35 +2310,48 @@ class _OrderScreenState extends State<OrderScreen> {
                     ),
                     child: imageUrl != null && imageUrl.isNotEmpty
                         ? Image.network(
-                      imageUrl,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: primaryColor.withOpacity(0.1),
-                          child: Center(
-                            child: CircularProgressIndicator(
+                            imageUrl,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: primaryColor.withOpacity(0.1),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: primaryColor,
+                                    strokeWidth: 2,
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: primaryColor.withOpacity(0.1),
+                                  child: Icon(
+                                    Icons.restaurant_menu,
+                                    color: primaryColor,
+                                    size: 30,
+                                  ),
+                                ),
+                          )
+                        : Container(
+                            color: primaryColor.withOpacity(0.1),
+                            child: Icon(
+                              Icons.restaurant_menu,
                               color: primaryColor,
-                              strokeWidth: 2,
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                                  : null,
+                              size: 30,
                             ),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: primaryColor.withOpacity(0.1),
-                        child: Icon(Icons.restaurant_menu, color: primaryColor, size: 30),
-                      ),
-                    )
-                        : Container(
-                      color: primaryColor.withOpacity(0.1),
-                      child: Icon(Icons.restaurant_menu, color: primaryColor, size: 30),
-                    ),
                   ),
                   // Popular badge
                   if (isPopular)
@@ -2234,7 +2359,10 @@ class _OrderScreenState extends State<OrderScreen> {
                       top: 6,
                       right: 6,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.amber,
                           borderRadius: BorderRadius.circular(8),
@@ -2255,7 +2383,10 @@ class _OrderScreenState extends State<OrderScreen> {
                       top: 6,
                       left: 6,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryColor.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),
@@ -2354,7 +2485,10 @@ class _OrderScreenState extends State<OrderScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -2402,9 +2536,7 @@ class _OrderScreenState extends State<OrderScreen> {
       } else if (variantsData is Map) {
         // If variants is a Map, convert it to a List
         variants = (variantsData as Map<String, dynamic>).entries.map((entry) {
-          final Map<String, dynamic> variantMap = {
-            'name': entry.key,
-          };
+          final Map<String, dynamic> variantMap = {'name': entry.key};
 
           // Add the variant properties if entry.value is a Map
           if (entry.value is Map) {
@@ -2435,10 +2567,11 @@ class _OrderScreenState extends State<OrderScreen> {
             double variantPrice = 0.0;
             if (selectedVariant != null) {
               final variant = variants.firstWhere(
-                    (v) => v['name'] == selectedVariant,
+                (v) => v['name'] == selectedVariant,
                 orElse: () => <String, dynamic>{},
               );
-              variantPrice = (variant['variantprice'] as num?)?.toDouble() ?? 0.0;
+              variantPrice =
+                  (variant['variantprice'] as num?)?.toDouble() ?? 0.0;
             }
             final totalPrice = basePrice + variantPrice;
 
@@ -2480,10 +2613,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   // Variants Section
                   Text(
                     'Variants',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
 
@@ -2498,9 +2628,14 @@ class _OrderScreenState extends State<OrderScreen> {
                   else
                     Column(
                       children: variants.map((variant) {
-                        final variantName = variant['name']?.toString() ?? 'Unknown Variant';
-                        final variantPrice = (variant['variantprice'] as num?)?.toDouble() ?? 0.0;
-                        final isAvailable = variant['isAvailable'] ?? true; // Default to true if not specified
+                        final variantName =
+                            variant['name']?.toString() ?? 'Unknown Variant';
+                        final variantPrice =
+                            (variant['variantprice'] as num?)?.toDouble() ??
+                            0.0;
+                        final isAvailable =
+                            variant['isAvailable'] ??
+                            true; // Default to true if not specified
                         final isSelected = selectedVariant == variantName;
 
                         return Container(
@@ -2508,11 +2643,15 @@ class _OrderScreenState extends State<OrderScreen> {
                           padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: isSelected ? primaryColor : Colors.grey[300]!,
+                              color: isSelected
+                                  ? primaryColor
+                                  : Colors.grey[300]!,
                               width: isSelected ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(8),
-                            color: isSelected ? primaryColor.withOpacity(0.1) : Colors.transparent,
+                            color: isSelected
+                                ? primaryColor.withOpacity(0.1)
+                                : Colors.transparent,
                           ),
                           child: Row(
                             children: [
@@ -2521,10 +2660,10 @@ class _OrderScreenState extends State<OrderScreen> {
                                 groupValue: selectedVariant,
                                 onChanged: isAvailable
                                     ? (value) {
-                                  setModalState(() {
-                                    selectedVariant = value;
-                                  });
-                                }
+                                        setModalState(() {
+                                          selectedVariant = value;
+                                        });
+                                      }
                                     : null,
                                 activeColor: primaryColor,
                               ),
@@ -2535,8 +2674,12 @@ class _OrderScreenState extends State<OrderScreen> {
                                     Text(
                                       variantName,
                                       style: TextStyle(
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                        color: isAvailable ? Colors.grey[800] : Colors.grey[400],
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isAvailable
+                                            ? Colors.grey[800]
+                                            : Colors.grey[400],
                                       ),
                                     ),
                                     if (variantPrice > 0)
@@ -2553,7 +2696,10 @@ class _OrderScreenState extends State<OrderScreen> {
                               ),
                               if (!isAvailable)
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.grey[200],
                                     borderRadius: BorderRadius.circular(4),
@@ -2578,10 +2724,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   // Quantity Selector
                   Text(
                     'Quantity',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
                   Row(
@@ -2629,10 +2772,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   // Special Instructions
                   Text(
                     'Special Instructions (Optional)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   SizedBox(height: 8),
                   TextField(
@@ -2654,9 +2794,11 @@ class _OrderScreenState extends State<OrderScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _addToCart(item, specialInstructions,
-                            selectedVariant: selectedVariant,
-                            quantity: quantity
+                        _addToCart(
+                          item,
+                          specialInstructions,
+                          selectedVariant: selectedVariant,
+                          quantity: quantity,
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -2687,12 +2829,14 @@ class _OrderScreenState extends State<OrderScreen> {
 
   Widget? _buildBottomNavigationBar() {
     // Enhanced condition: order served + unpaid + seat occupied + order exists
-    bool showPaymentButton = _currentOrderStatus == 'served' &&
+    bool showPaymentButton =
+        _currentOrderStatus == 'served' &&
         _currentPaymentStatus == 'unpaid' &&
         (_tableStatus == 'occupied' || _tableStatus == 'ordered') &&
         _currentOrderId != null;
 
-    if (_cartItems.isEmpty && _tableStatus != 'ordered' && !showPaymentButton) return null;
+    if (_cartItems.isEmpty && _tableStatus != 'ordered' && !showPaymentButton)
+      return null;
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -2724,10 +2868,7 @@ class _OrderScreenState extends State<OrderScreen> {
                         _isAddingToExistingOrder
                             ? 'Additional Total'
                             : 'Total Amount',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       Text(
                         'QAR ${_totalAmount.toStringAsFixed(2)}',
@@ -2739,10 +2880,7 @@ class _OrderScreenState extends State<OrderScreen> {
                       ),
                       Text(
                         '${_cartItems.length} item${_cartItems.length != 1 ? 's' : ''}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -2791,26 +2929,30 @@ class _OrderScreenState extends State<OrderScreen> {
                   minimumSize: Size(double.infinity, 48),
                 ),
                 child: _isCheckingOut
-                    ? CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                    ? CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      )
                     : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.payment, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Pay Now - Order Served',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.payment, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Pay Now - Order Served',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
 
           // Original checkout button for other statuses
-          if ((_tableStatus == 'ordered' || _tableStatus == 'occupied') && !showPaymentButton)
+          if ((_tableStatus == 'ordered' || _tableStatus == 'occupied') &&
+              !showPaymentButton)
             Padding(
               padding: EdgeInsets.only(top: _cartItems.isNotEmpty ? 12 : 0),
               child: ElevatedButton(
@@ -2825,21 +2967,24 @@ class _OrderScreenState extends State<OrderScreen> {
                   minimumSize: Size(double.infinity, 48),
                 ),
                 child: _isCheckingOut
-                    ? CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                    ? CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      )
                     : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.payment, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Checkout & Pay',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.payment, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Checkout & Pay',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
         ],
@@ -2847,9 +2992,12 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-
-  void _addToCart(QueryDocumentSnapshot item, String? specialInstructions,
-      {int quantity = 1, String? selectedVariant}) {
+  void _addToCart(
+    QueryDocumentSnapshot item,
+    String? specialInstructions, {
+    int quantity = 1,
+    String? selectedVariant,
+  }) {
     setState(() {
       final itemData = item.data() as Map<String, dynamic>;
       final basePrice = (itemData['price'] as num?)?.toDouble() ?? 0.0;
@@ -2862,7 +3010,7 @@ class _OrderScreenState extends State<OrderScreen> {
           if (variants is List) {
             final variantList = List<Map<String, dynamic>>.from(variants);
             final variant = variantList.firstWhere(
-                  (v) => v['name'] == selectedVariant,
+              (v) => v['name'] == selectedVariant,
               orElse: () => <String, dynamic>{},
             );
             variantPrice = (variant['variantprice'] as num?)?.toDouble() ?? 0.0;
@@ -2871,7 +3019,8 @@ class _OrderScreenState extends State<OrderScreen> {
             if (variantsMap.containsKey(selectedVariant)) {
               final variantData = variantsMap[selectedVariant];
               if (variantData is Map) {
-                variantPrice = (variantData['variantprice'] as num?)?.toDouble() ?? 0.0;
+                variantPrice =
+                    (variantData['variantprice'] as num?)?.toDouble() ?? 0.0;
               }
             }
           }
@@ -2891,14 +3040,17 @@ class _OrderScreenState extends State<OrderScreen> {
 
         // Compare special instructions (handle null cases)
         final cartInstructions = cartItem['specialInstructions'];
-        if (cartInstructions == null && specialInstructions == null) return true;
-        if (cartInstructions == null || specialInstructions == null) return false;
+        if (cartInstructions == null && specialInstructions == null)
+          return true;
+        if (cartInstructions == null || specialInstructions == null)
+          return false;
         return cartInstructions == specialInstructions;
       });
 
       if (existingIndex >= 0) {
         // Update existing item quantity
-        int currentQuantity = (_cartItems[existingIndex]['quantity'] as num).toInt();
+        int currentQuantity = (_cartItems[existingIndex]['quantity'] as num)
+            .toInt();
         _cartItems[existingIndex]['quantity'] = currentQuantity + quantity;
       } else {
         // Add new item to cart
@@ -2926,6 +3078,7 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
   }
+
   void _updateQuantity(int index, int change) {
     setState(() {
       _cartItems[index]['quantity'] += change;
@@ -2937,7 +3090,6 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
-
   void _calculateTotal() {
     _totalAmount = _cartItems.fold(0.0, (sum, item) {
       final double price = (item['price'] as num).toDouble();
@@ -2946,12 +3098,11 @@ class _OrderScreenState extends State<OrderScreen> {
     });
   }
 
-
-
   // In _OrderScreenState class - Update the _showPaymentOptions method
   void _showPaymentOptions() {
     // Check if order hasn't gone through proper workflow
-    final bool hasSkippedSteps = _currentOrderStatus.isEmpty ||
+    final bool hasSkippedSteps =
+        _currentOrderStatus.isEmpty ||
         (_currentOrderStatus != 'served' && _currentOrderStatus != 'paid');
 
     if (hasSkippedSteps) {
@@ -2971,7 +3122,10 @@ class _OrderScreenState extends State<OrderScreen> {
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
             SizedBox(width: 12),
-            Text('Order Not Ready', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Order Not Ready',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Column(
@@ -3105,7 +3259,11 @@ class _OrderScreenState extends State<OrderScreen> {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.credit_card, size: 40, color: Colors.blue),
+                            Icon(
+                              Icons.credit_card,
+                              size: 40,
+                              color: Colors.blue,
+                            ),
                             SizedBox(height: 8),
                             Text(
                               'Card',
@@ -3132,5 +3290,4 @@ class _OrderScreenState extends State<OrderScreen> {
       },
     );
   }
-
 }
