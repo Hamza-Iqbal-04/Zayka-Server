@@ -11,14 +11,13 @@ import 'TableScreen.dart';
 import 'TakeawayScreen.dart';
 import 'firebase_options.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // required for FlutterFire
   );
-  runApp( MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -53,15 +52,11 @@ class AuthWrapper extends StatelessWidget {
           }
           return MainWaiterApp();
         }
-        return Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }
 }
-
-
 
 class MainWaiterApp extends StatefulWidget {
   @override
@@ -72,11 +67,20 @@ class _MainWaiterAppState extends State<MainWaiterApp> {
   int _selectedIndex = 0;
   final Color primaryColor = Color(0xFF1976D2);
 
-  final List<Widget> _screens = [
-    TablesScreen(),
-    ActiveOrdersScreen(),
-    TakeawayOrderScreen(),
-  ];
+  // Build screen lazily - only the active screen is rendered
+  // This prevents all Firestore streams from running simultaneously
+  Widget _buildScreen(int index) {
+    switch (index) {
+      case 0:
+        return TablesScreen();
+      case 1:
+        return ActiveOrdersScreen();
+      case 2:
+        return TakeawayOrderScreen();
+      default:
+        return TablesScreen();
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -88,10 +92,8 @@ class _MainWaiterAppState extends State<MainWaiterApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       // No global appBar - each screen handles its own
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      // Using conditional rendering instead of IndexedStack for better performance
+      body: _buildScreen(_selectedIndex),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -155,7 +157,6 @@ class _MainWaiterAppState extends State<MainWaiterApp> {
                 label: 'Orders',
               ),
 
-
               BottomNavigationBarItem(
                 icon: Container(
                   padding: EdgeInsets.all(4),
@@ -178,4 +179,3 @@ class _MainWaiterAppState extends State<MainWaiterApp> {
     );
   }
 }
-

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class TakeawayOrderScreen extends StatefulWidget {
   @override
@@ -32,20 +35,30 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
   // Add this to prevent duplicate submissions
   bool _isOrderInProgress = false;
 
+  // Debounce timer for search input
+  Timer? _searchDebounceTimer;
+
   @override
   void initState() {
     super.initState();
     _loadCategories();
 
+    // Debounced search listener to prevent rapid rebuilds
     _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
+      _searchDebounceTimer?.cancel();
+      _searchDebounceTimer = Timer(Duration(milliseconds: 300), () {
+        if (mounted && _searchController.text.toLowerCase() != _searchQuery) {
+          setState(() {
+            _searchQuery = _searchController.text.toLowerCase();
+          });
+        }
       });
     });
   }
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     _searchController.dispose();
     _carPlateNumberController.dispose();
     _specialInstructionsController.dispose();
@@ -642,15 +655,22 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: imageUrl.isNotEmpty
-                          ? Image.network(
-                              imageUrl,
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(
-                                    Icons.restaurant_menu,
-                                    color: primaryColor,
-                                    size: 24,
-                                  ),
+                              placeholder: (context, url) => Container(
+                                color: primaryColor.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.restaurant_menu,
+                                  color: primaryColor,
+                                  size: 24,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Icon(
+                                Icons.restaurant_menu,
+                                color: primaryColor,
+                                size: 24,
+                              ),
                             )
                           : Icon(
                               Icons.restaurant_menu,
@@ -784,40 +804,28 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
                       topRight: Radius.circular(12),
                     ),
                     child: imageUrl != null && imageUrl.isNotEmpty
-                        ? Image.network(
-                            imageUrl,
+                        ? CachedNetworkImage(
+                            imageUrl: imageUrl,
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                color: primaryColor.withOpacity(0.1),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: primaryColor,
-                                    strokeWidth: 2,
-                                    value:
-                                        loadingProgress.expectedTotalBytes !=
-                                            null
-                                        ? loadingProgress
-                                                  .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                        : null,
-                                  ),
+                            placeholder: (context, url) => Container(
+                              color: primaryColor.withOpacity(0.1),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: primaryColor,
+                                  strokeWidth: 2,
                                 ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  color: primaryColor.withOpacity(0.1),
-                                  child: Icon(
-                                    Icons.restaurant_menu,
-                                    color: primaryColor,
-                                    size: 30,
-                                  ),
-                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: primaryColor.withOpacity(0.1),
+                              child: Icon(
+                                Icons.restaurant_menu,
+                                color: primaryColor,
+                                size: 30,
+                              ),
+                            ),
                           )
                         : Container(
                             color: primaryColor.withOpacity(0.1),

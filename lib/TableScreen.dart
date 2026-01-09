@@ -297,56 +297,55 @@ class _TablesScreenState extends State<TablesScreen>
 
   Widget _buildQuickStats(Map<String, dynamic> tables) {
     return SliverToBoxAdapter(
-      child: AnimatedBuilder(
-        animation: _statsController,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, 50 * (1 - _statsController.value)),
-            child: Opacity(
-              opacity: _statsController.value,
-              child: Container(
-                margin: EdgeInsets.all(20),
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 20,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildQuickStat(
-                      'Total',
-                      tables.length,
-                      Colors.grey[800]!,
-                      Icons.grid_view_rounded,
-                    ),
-                    _buildVerticalDivider(),
-                    _buildQuickStat(
-                      'Available',
-                      _getStatusCount(tables, 'available'),
-                      Colors.green,
-                      Icons.check_circle_outline,
-                    ),
-                    _buildVerticalDivider(),
-                    _buildQuickStat(
-                      'Ordered',
-                      _getStatusCount(tables, 'ordered'),
-                      Colors.blue,
-                      Icons.restaurant_menu,
-                    ),
-                  ],
-                ),
-              ),
+      // Using SlideTransition + FadeTransition with child caching for better performance
+      child: SlideTransition(
+        position: Tween<Offset>(begin: Offset(0, 0.3), end: Offset.zero)
+            .animate(
+              CurvedAnimation(parent: _statsController, curve: Curves.easeOut),
             ),
-          );
-        },
+        child: FadeTransition(
+          opacity: _statsController,
+          child: Container(
+            margin: EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildQuickStat(
+                  'Total',
+                  tables.length,
+                  Colors.grey[800]!,
+                  Icons.grid_view_rounded,
+                ),
+                _buildVerticalDivider(),
+                _buildQuickStat(
+                  'Available',
+                  _getStatusCount(tables, 'available'),
+                  Colors.green,
+                  Icons.check_circle_outline,
+                ),
+                _buildVerticalDivider(),
+                _buildQuickStat(
+                  'Ordered',
+                  _getStatusCount(tables, 'ordered'),
+                  Colors.blue,
+                  Icons.restaurant_menu,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

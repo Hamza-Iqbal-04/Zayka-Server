@@ -201,7 +201,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
 
         return RefreshIndicator(
           onRefresh: () async {
-            setState(() {});
+            // Removed setState - RefreshIndicator handles the visual state
             await Future.delayed(Duration(milliseconds: 500));
           },
           child: ListView(
@@ -346,6 +346,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                 SizedBox(height: 8),
                 ...orders.map(
                   (order) => Padding(
+                    key: ValueKey(order.id), // Key for efficient list diffing
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
@@ -465,6 +466,7 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
                 SizedBox(height: 8),
                 ...orders.map(
                   (order) => Padding(
+                    key: ValueKey(order.id), // Key for efficient list diffing
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
