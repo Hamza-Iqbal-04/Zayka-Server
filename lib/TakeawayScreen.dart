@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class TakeawayOrderScreen extends StatefulWidget {
   @override
@@ -104,87 +103,71 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Takeaway Order',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(
-              'Ready in 15-20 mins • Mansoura Branch',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Colors.white70,
-              ),
-            ),
-          ],
-        ),
+        elevation: 0,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
+        title: Text(
+          'Takeaway Order',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.info_outline),
-            onPressed: () => _showTakeawayInfo(),
-            tooltip: 'Takeaway Information',
+            onPressed: _showTakeawayInfo,
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, secondaryColor],
-          ),
-        ),
-        child: Column(
-          children: [
-            if (_cartItems.isNotEmpty) _buildCartSection(),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_cartItems.isEmpty) _buildEmptyCart(),
-                  _buildSearchBar(),
-                  Expanded(child: _buildMenuList()),
-                ],
-              ),
+      body: Column(
+        children: [
+          // Minimal Status Bar
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: primaryColor.withOpacity(0.1),
+            child: Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
+                SizedBox(width: 8),
+                Text(
+                  'Ready in 15-20 mins',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[700],
+                    fontSize: 13,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Container(
+                  width: 4,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Icon(Icons.store_outlined, size: 16, color: Colors.grey[600]),
+                SizedBox(width: 4),
+                Text(
+                  'Mansoura',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          // Compact Cart Section
+          if (_cartItems.isNotEmpty) _buildCartSection(),
+
+          // Search Bar
+          _buildSearchBar(),
+
+          // Menu List
+          Expanded(child: _buildMenuList()),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _categories.isNotEmpty
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                setState(() {
-                  if (_expandedCategories.length == _categories.length) {
-                    _expandedCategories.clear(); // Collapse all
-                  } else {
-                    _expandedCategories = _categories
-                        .map((cat) => cat['name'] as String)
-                        .toSet(); // Expand all
-                  }
-                });
-              },
-              backgroundColor: primaryColor,
-              icon: Icon(
-                _expandedCategories.length == _categories.length
-                    ? Icons.expand_less
-                    : Icons.expand_more,
-                color: Colors.white,
-              ),
-              label: Text(
-                _expandedCategories.length == _categories.length
-                    ? 'Collapse All'
-                    : 'Expand All',
-                style: TextStyle(color: Colors.white),
-              ),
-            )
-          : null,
     );
   }
 
@@ -288,199 +271,163 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
 
   Widget _buildCartSection() {
     return Container(
+      margin: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryColor.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+          // Header
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 18,
+                  color: primaryColor,
+                ),
+                SizedBox(width: 8),
                 Text(
-                  'Current Takeaway Order',
+                  'Cart (${_cartItems.length})',
                   style: TextStyle(
-                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: primaryColor,
+                    fontSize: 14,
                   ),
                 ),
+                Spacer(),
                 Text(
                   'QAR ${_totalAmount.toStringAsFixed(2)}',
                   style: TextStyle(
-                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: primaryColor,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            height: 140,
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: _cartItems.length,
-              itemBuilder: (context, index) {
-                final item = _cartItems[index];
-                return Container(
-                  width: 170,
-                  margin: EdgeInsets.only(right: 12, bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: primaryColor.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+          // Cart Items - Compact List
+          ListView.separated(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: _cartItems.length,
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: Colors.grey[200]),
+            itemBuilder: (context, index) {
+              final item = _cartItems[index];
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    // Item name
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['name'],
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (item['specialInstructions'] != null &&
+                              item['specialInstructions'].toString().isNotEmpty)
                             Text(
-                              item['name'],
+                              item['specialInstructions'],
                               style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 13,
+                                fontSize: 11,
+                                color: Colors.orange[700],
+                                fontStyle: FontStyle.italic,
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'QAR ${item['price'].toStringAsFixed(2)} each',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
+                        ],
+                      ),
+                    ),
+                    // Quantity controls
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _updateQuantity(index, -1),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            if (item['specialInstructions'] != null &&
-                                item['specialInstructions'].isNotEmpty)
-                              SizedBox(height: 4),
-                            if (item['specialInstructions'] != null &&
-                                item['specialInstructions'].isNotEmpty)
-                              Text(
-                                'Special: ${item['specialInstructions']}',
-                                style: TextStyle(
-                                  color: Colors.orange[700],
-                                  fontSize: 10,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
+                            child: Icon(
+                              Icons.remove,
+                              size: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: () => _updateQuantity(index, -1),
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.remove,
-                                  size: 18,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
+                        Container(
+                          width: 32,
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${item['quantity']}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
-                            SizedBox(width: 12),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${item['quantity']}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryColor,
-                                ),
-                              ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _updateQuantity(index, 1),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () => _updateQuantity(index, 1),
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.add,
-                                  size: 18,
-                                  color: primaryColor,
-                                ),
-                              ),
+                            child: Icon(
+                              Icons.add,
+                              size: 16,
+                              color: primaryColor,
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                );
-              },
-            ),
+                    SizedBox(width: 12),
+                    // Price
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        'QAR ${(item['price'] * item['quantity']).toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: Colors.grey[700],
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyCart() {
-    return Container(
-      height: 120,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 48,
-              color: Colors.grey[300],
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Your cart is empty',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
-            Text(
-              'Add items from the menu below',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -567,10 +514,83 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
           padding: EdgeInsets.all(16),
           itemCount:
               _categories.length +
-              (categorizedItems['other']!.isNotEmpty ? 1 : 0),
+              (categorizedItems['other']!.isNotEmpty ? 1 : 0) +
+              1, // Add 1 for the header
           itemBuilder: (context, index) {
-            if (index < _categories.length) {
-              final category = _categories[index];
+            // Header with Expand/Collapse All
+            if (index == 0) {
+              final isAllExpanded = _categories.every(
+                (c) => _expandedCategories.contains(c['name']),
+              );
+
+              return Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Menu Categories',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (isAllExpanded) {
+                            _expandedCategories.clear();
+                          } else {
+                            _expandedCategories.addAll(
+                              _categories.map((c) => c['name'] as String),
+                            );
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isAllExpanded ? 'Collapse All' : 'Expand All',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              isAllExpanded
+                                  ? Icons.unfold_less
+                                  : Icons.unfold_more,
+                              size: 16,
+                              color: primaryColor,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Adjust index for categories
+            final categoryIndex = index - 1;
+
+            if (categoryIndex < _categories.length) {
+              final category = _categories[categoryIndex];
               final categoryItems = categorizedItems[category['id']] ?? [];
               return _buildCategorySection(category, categoryItems);
             } else {
@@ -615,18 +635,18 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
     List<QueryDocumentSnapshot> items,
   ) {
     final categoryName = category['name'];
-    final imageUrl = category['imageUrl'];
     final isExpanded = _expandedCategories.contains(categoryName);
     final hasItems = items.isNotEmpty;
 
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Column(
         children: [
-          // Category Header (always visible)
+          // Compact Category Header
           InkWell(
             onTap: hasItems
                 ? () {
@@ -639,135 +659,88 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
                     });
                   }
                 : null,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  // Category Image
+                  // Category icon
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
                       color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: imageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: primaryColor.withOpacity(0.1),
-                                child: Icon(
-                                  Icons.restaurant_menu,
-                                  color: primaryColor,
-                                  size: 24,
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Icon(
-                                Icons.restaurant_menu,
-                                color: primaryColor,
-                                size: 24,
-                              ),
-                            )
-                          : Icon(
-                              Icons.restaurant_menu,
-                              color: primaryColor,
-                              size: 24,
-                            ),
+                    child: Icon(
+                      Icons.restaurant_menu,
+                      color: primaryColor,
+                      size: 18,
                     ),
                   ),
-                  SizedBox(width: 16),
-
-                  // Category Name and Item Count
+                  SizedBox(width: 12),
+                  // Category Name
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          categoryName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
-                          ),
-                        ),
-                        if (hasItems)
-                          Text(
-                            '${items.length} item${items.length != 1 ? 's' : ''}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  // Expand/Collapse Arrow
-                  if (hasItems)
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.5 : 0,
-                      duration: Duration(milliseconds: 200),
-                      child: Icon(
-                        Icons.keyboard_arrow_down,
-                        color: primaryColor,
-                        size: 28,
+                    child: Text(
+                      categoryName,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
                       ),
                     ),
-
-                  // No items indicator
-                  if (!hasItems)
+                  ),
+                  // Item count
+                  if (hasItems)
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        'No items',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        '${items.length}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                        ),
                       ),
+                    ),
+                  SizedBox(width: 8),
+                  // Expand/Collapse Arrow
+                  if (hasItems)
+                    Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: Colors.grey[600],
+                      size: 24,
                     ),
                 ],
               ),
             ),
           ),
 
-          // Expandable Items Section
-          AnimatedCrossFade(
-            firstChild: SizedBox.shrink(),
-            secondChild: hasItems
-                ? _buildCategoryItems(items)
-                : SizedBox.shrink(),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: Duration(milliseconds: 300),
-          ),
+          // Expandable Items Section - Simple List
+          if (isExpanded && hasItems) _buildCategoryItems(items),
         ],
       ),
     );
   }
 
   Widget _buildCategoryItems(List<QueryDocumentSnapshot> items) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+    return Padding(
+      padding: EdgeInsets.all(12),
       child: GridView.builder(
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.8,
+          childAspectRatio: 1.15, // Taller boxes to prevent overflow
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
         ),
         itemCount: items.length,
-        itemBuilder: (context, index) {
-          return _buildMenuItemCard(items[index]);
-        },
+        itemBuilder: (context, index) => _buildMenuItemCard(items[index]),
       ),
     );
   }
@@ -776,229 +749,97 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
     final itemData = item.data() as Map<String, dynamic>;
     final name = itemData['name']?.toString() ?? 'Unknown Item';
     final price = (itemData['price'] as num?)?.toDouble() ?? 0.0;
-    final imageUrl = itemData['imageUrl']?.toString();
-    final estimatedTime = itemData['EstimatedTime']?.toString() ?? '';
     final isPopular = itemData['isPopular'] ?? false;
     final hasVariants =
         itemData['variants'] != null &&
         itemData['variants'] is Map &&
         (itemData['variants'] as Map).isNotEmpty;
 
-    return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image Section
-          Expanded(
-            flex: 4,
-            child: Container(
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                    child: imageUrl != null && imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: imageUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: primaryColor.withOpacity(0.1),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: primaryColor,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: primaryColor.withOpacity(0.1),
-                              child: Icon(
-                                Icons.restaurant_menu,
-                                color: primaryColor,
-                                size: 30,
-                              ),
-                            ),
-                          )
-                        : Container(
-                            color: primaryColor.withOpacity(0.1),
-                            child: Icon(
-                              Icons.restaurant_menu,
-                              color: primaryColor,
-                              size: 30,
-                            ),
-                          ),
-                  ),
-                  // Popular badge
-                  if (isPopular)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'POPULAR',
-                          style: TextStyle(
-                            fontSize: 7,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  // Variants indicator
-                  if (hasVariants)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'VARIANTS',
-                          style: TextStyle(
-                            fontSize: 7,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+    return InkWell(
+      onTap: () => hasVariants
+          ? _showCustomizationOptions(item)
+          : _addToCart(item, null),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
-          ),
-
-          // Content Section
-          Expanded(
-            flex: 5,
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Item Name
-                  Flexible(
-                    flex: 2,
+          ],
+        ),
+        padding: EdgeInsets.all(10), // Reduced padding
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Name and Popular Badge
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isPopular)
+                  Container(
+                    margin: EdgeInsets.only(bottom: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Text(
-                      name,
+                      'POPULAR',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-
-                  SizedBox(height: 4),
-
-                  // Price and Time Row
-                  Flexible(
-                    flex: 1,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            'QAR ${price.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                              fontSize: 13,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (estimatedTime.isNotEmpty)
-                          Flexible(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.timer, size: 10, color: Colors.grey),
-                                SizedBox(width: 2),
-                                Text(
-                                  '${estimatedTime}m',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.grey,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 8),
-
-                  // Add Button
-                  Flexible(
-                    flex: 2,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 36,
-                      child: ElevatedButton(
-                        onPressed: () => hasVariants
-                            ? _showCustomizationOptions(item)
-                            : _addToCart(item, null),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              'Add',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
-              ),
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ),
-        ],
+
+            // Price and Add Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'QAR ${price.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    hasVariants ? Icons.arrow_forward : Icons.add,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
