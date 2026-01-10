@@ -108,6 +108,191 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 900) {
+          return _buildTabletScaffold(context);
+        }
+        return _buildMobileScaffold(context);
+      },
+    );
+  }
+
+  Widget _buildTabletScaffold(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        title: Text(
+          'Takeaway Order',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline),
+            onPressed: _showTakeawayInfo,
+          ),
+        ],
+      ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left Panel: Customer Details & Cart (40%)
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // Status Bar
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    color: primaryColor.withOpacity(0.1),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ready in 15-20 mins',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                          ),
+                        ),
+                        Spacer(),
+                        Icon(
+                          Icons.store_outlined,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          Provider.of<UserProvider>(context).currentBranch ??
+                              'Unknown',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_cartItems.isNotEmpty) _buildCartSection(),
+
+                          SizedBox(height: 24),
+                          Text(
+                            'Customer Details',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+
+                          // Customer Form Fields (Always Visible on Tablet)
+                          TextField(
+                            controller: _carPlateNumberController,
+                            decoration: InputDecoration(
+                              labelText: 'Car Plate Number *',
+                              hintText: 'e.g. XYZ 789',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: Icon(Icons.directions_car),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            textCapitalization: TextCapitalization.characters,
+                          ),
+                          SizedBox(height: 16),
+                          TextField(
+                            controller: _specialInstructionsController,
+                            decoration: InputDecoration(
+                              labelText: 'Special Instructions (Optional)',
+                              hintText: 'e.g. Honk twice when outside',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              prefixIcon: Icon(Icons.note),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            maxLines: 3,
+                          ),
+
+                          SizedBox(height: 24),
+
+                          // Submit Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: (_isSubmitting || _isOrderInProgress)
+                                  ? null
+                                  : _validateAndSubmitOrder,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: (_isSubmitting || _isOrderInProgress)
+                                  ? SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Place Takeaway Order - QAR ${_totalAmount.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          VerticalDivider(width: 1, color: Colors.grey[300]),
+
+          // Right Panel: Menu Grid (60%)
+          Expanded(
+            flex: 6,
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(child: _buildMenuList(crossAxisCount: 3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -438,7 +623,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
     );
   }
 
-  Widget _buildMenuList() {
+  Widget _buildMenuList({int crossAxisCount = 2}) {
     if (_isLoadingCategories) {
       return Center(child: CircularProgressIndicator());
     }
@@ -603,16 +788,24 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
             if (categoryIndex < _categories.length) {
               final category = _categories[categoryIndex];
               final categoryItems = categorizedItems[category['id']] ?? [];
-              return _buildCategorySection(category, categoryItems);
+              return _buildCategorySection(
+                category,
+                categoryItems,
+                crossAxisCount: crossAxisCount,
+              );
             } else {
               // "Other" category section
               final otherItems = categorizedItems['other']!;
-              return _buildCategorySection({
-                'id': 'other',
-                'name': 'Other Items',
-                'imageUrl': '',
-                'sortOrder': 999,
-              }, otherItems);
+              return _buildCategorySection(
+                {
+                  'id': 'other',
+                  'name': 'Other Items',
+                  'imageUrl': '',
+                  'sortOrder': 999,
+                },
+                otherItems,
+                crossAxisCount: crossAxisCount,
+              );
             }
           },
         );
@@ -643,8 +836,9 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
 
   Widget _buildCategorySection(
     Map<String, dynamic> category,
-    List<QueryDocumentSnapshot> items,
-  ) {
+    List<QueryDocumentSnapshot> items, {
+    int crossAxisCount = 2,
+  }) {
     final categoryName = category['name'];
     final isExpanded = _expandedCategories.contains(categoryName);
     final hasItems = items.isNotEmpty;
@@ -732,20 +926,24 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
           ),
 
           // Expandable Items Section - Simple List
-          if (isExpanded && hasItems) _buildCategoryItems(items),
+          if (isExpanded && hasItems)
+            _buildCategoryItems(items, crossAxisCount: crossAxisCount),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryItems(List<QueryDocumentSnapshot> items) {
+  Widget _buildCategoryItems(
+    List<QueryDocumentSnapshot> items, {
+    int crossAxisCount = 2,
+  }) {
     return Padding(
       padding: EdgeInsets.all(12),
       child: GridView.builder(
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: crossAxisCount,
           childAspectRatio: 1.15, // Taller boxes to prevent overflow
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,

@@ -10,7 +10,6 @@ import 'Screens/LoginScreen.dart';
 import 'Screens/TableScreen.dart';
 import 'Screens/TakeawayScreen.dart';
 import 'Firebase/firebase_options.dart';
-// Listener imports
 import 'package:audioplayers/audioplayers.dart'; // v5.0.0
 import 'package:vibration/vibration.dart';
 import 'Screens/OrderDetailScreen.dart';
@@ -39,7 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Restaurant Waiter App',
+      title: 'Restaurant Server App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,

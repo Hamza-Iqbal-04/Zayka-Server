@@ -568,25 +568,47 @@ class _TablesScreenState extends State<TablesScreen>
   }
 
   Widget _buildTablesGrid(List<MapEntry<String, dynamic>> filteredTables) {
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      sliver: SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 3,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio:
-              0.7, // Changed from 0.85 to 0.7 to make cards taller
-        ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final entry = filteredTables[index];
-          return _buildTableCard(
-            context,
-            entry.key,
-            entry.value as Map<String, dynamic>,
-          );
-        }, childCount: filteredTables.length),
-      ),
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate optimal column count based on available width
+        final double availableWidth = constraints.crossAxisExtent;
+        int crossAxisCount;
+        double childAspectRatio;
+
+        if (availableWidth > 1200) {
+          crossAxisCount = 6;
+          childAspectRatio = 0.85;
+        } else if (availableWidth > 900) {
+          crossAxisCount = 5;
+          childAspectRatio = 0.8;
+        } else if (availableWidth > 600) {
+          crossAxisCount = 4;
+          childAspectRatio = 0.75;
+        } else {
+          crossAxisCount = 3;
+          childAspectRatio = 0.7;
+        }
+
+        return SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: childAspectRatio,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final entry = filteredTables[index];
+              return _buildTableCard(
+                context,
+                entry.key,
+                entry.value as Map<String, dynamic>,
+              );
+            }, childCount: filteredTables.length),
+          ),
+        );
+      },
     );
   }
 
@@ -1486,6 +1508,303 @@ class _OrderScreenState extends State<OrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 900) {
+          return _buildTabletScaffold(context);
+        }
+        return _buildMobileScaffold(context);
+      },
+    );
+  }
+
+  Widget _buildTabletScaffold(BuildContext context) {
+    bool hasActiveOrder =
+        _tableStatus == 'occupied' || _tableStatus == 'ordered';
+
+    return Scaffold(
+      backgroundColor: Color(0xFFF8F9FA),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        title: Text(
+          'Table ${widget.tableNumber}',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        actions: [
+          Row(
+            children: [
+              if (_isToggling)
+                Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              else
+                IconButton(
+                  icon: Icon(
+                    _tableStatus == 'available'
+                        ? Icons.check_circle
+                        : Icons.pending,
+                    color: _tableStatus == 'available'
+                        ? Colors.green[300]
+                        : Colors.orange[300],
+                  ),
+                  onPressed: _toggleTableAvailability,
+                  tooltip: _tableStatus == 'available'
+                      ? 'Mark Occupied'
+                      : 'Mark Available',
+                ),
+              SizedBox(width: 8),
+              IconButton(
+                icon: Icon(Icons.info_outline),
+                onPressed: _showTableInfo,
+              ),
+              SizedBox(width: 16),
+            ],
+          ),
+        ],
+      ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left Panel: Status, Cart, Orders (40%)
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  // Status Bar
+                  if (hasActiveOrder || _isAddingToExistingOrder)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      color: primaryColor.withOpacity(0.1),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(_tableStatus),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            _getStatusDisplayText(_tableStatus),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                              fontSize: 13,
+                            ),
+                          ),
+                          if (_elapsed.inMinutes > 0) ...[
+                            SizedBox(width: 12),
+                            Icon(
+                              Icons.timer_outlined,
+                              size: 14,
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              _formatDuration(_elapsed),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                          Spacer(),
+                          if (_isAddingToExistingOrder &&
+                              _currentOrderId != null)
+                            TextButton.icon(
+                              onPressed: _navigateToOrderDetail,
+                              icon: Icon(Icons.receipt_long, size: 16),
+                              label: Text('View Order'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: primaryColor,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          if (_cartItems.isEmpty && _existingOrderItems.isEmpty)
+                            Padding(
+                              padding: EdgeInsets.only(top: 40),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 48,
+                                    color: Colors.grey[300],
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Cart is empty',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_existingOrderItems.isNotEmpty)
+                            _buildExistingOrderSection(),
+                          if (_cartItems.isNotEmpty) _buildCartSection(),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Action Area
+                  if (_cartItems.isNotEmpty ||
+                      (_currentOrderStatus == 'served' &&
+                          _currentPaymentStatus == 'unpaid'))
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          if (_cartItems.isNotEmpty)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Total Amount',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        'QAR ${_totalAmount.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                ElevatedButton.icon(
+                                  onPressed: _submitOrder,
+                                  icon: Icon(Icons.check_circle_outline),
+                                  label: Text(
+                                    _isAddingToExistingOrder
+                                        ? 'Add Items'
+                                        : 'Submit Order',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (_currentOrderStatus == 'served' &&
+                              _currentPaymentStatus == 'unpaid' &&
+                              (_tableStatus == 'occupied' ||
+                                  _tableStatus == 'ordered'))
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: _cartItems.isNotEmpty ? 12 : 0,
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isCheckingOut
+                                      ? null
+                                      : _showPaymentOptions,
+                                  icon: _isCheckingOut
+                                      ? Container(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Icon(Icons.payment),
+                                  label: Text('Pay Now - Order Served'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          VerticalDivider(width: 1, color: Colors.grey[300]),
+          // Right Panel: Menu (60%)
+          Expanded(
+            flex: 6,
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(child: _buildMenuList(crossAxisCount: 3)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileScaffold(BuildContext context) {
     bool hasActiveOrder =
         _tableStatus == 'occupied' || _tableStatus == 'ordered';
 
@@ -1974,7 +2293,7 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   // Updated _buildMenuList with category-based collapsible UI
-  Widget _buildMenuList() {
+  Widget _buildMenuList({int crossAxisCount = 2}) {
     if (_isLoadingCategories) {
       return Center(child: CircularProgressIndicator());
     }
@@ -2143,16 +2462,24 @@ class _OrderScreenState extends State<OrderScreen> {
             if (categoryIndex < _categories.length) {
               final category = _categories[categoryIndex];
               final categoryItems = categorizedItems[category['id']] ?? [];
-              return _buildCategorySection(category, categoryItems);
+              return _buildCategorySection(
+                category,
+                categoryItems,
+                crossAxisCount: crossAxisCount,
+              );
             } else {
               // "Other" category section
               final otherItems = categorizedItems['other']!;
-              return _buildCategorySection({
-                'id': 'other',
-                'name': 'Other Items',
-                'imageUrl': '',
-                'sortOrder': 999,
-              }, otherItems);
+              return _buildCategorySection(
+                {
+                  'id': 'other',
+                  'name': 'Other Items',
+                  'imageUrl': '',
+                  'sortOrder': 999,
+                },
+                otherItems,
+                crossAxisCount: crossAxisCount,
+              );
             }
           },
         );
@@ -2183,8 +2510,9 @@ class _OrderScreenState extends State<OrderScreen> {
 
   Widget _buildCategorySection(
     Map<String, dynamic> category,
-    List<QueryDocumentSnapshot> items,
-  ) {
+    List<QueryDocumentSnapshot> items, {
+    int crossAxisCount = 2,
+  }) {
     final categoryName = category['name'];
     final isExpanded = _expandedCategories.contains(categoryName);
     final hasItems = items.isNotEmpty;
@@ -2272,20 +2600,24 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
 
           // Expandable Items Section - Simple List
-          if (isExpanded && hasItems) _buildCategoryItems(items),
+          if (isExpanded && hasItems)
+            _buildCategoryItems(items, crossAxisCount: crossAxisCount),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryItems(List<QueryDocumentSnapshot> items) {
+  Widget _buildCategoryItems(
+    List<QueryDocumentSnapshot> items, {
+    int crossAxisCount = 2,
+  }) {
     return Padding(
       padding: EdgeInsets.all(12),
       child: GridView.builder(
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: crossAxisCount,
           childAspectRatio: 1.15, // Taller boxes to prevent overflow
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,

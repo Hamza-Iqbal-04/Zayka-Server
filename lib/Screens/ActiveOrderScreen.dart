@@ -173,40 +173,45 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
             // Removed setState - RefreshIndicator handles the visual state
             await Future.delayed(Duration(milliseconds: 500));
           },
-          child: ListView(
-            padding: EdgeInsets.all(16),
-            children: [
-              _buildSummaryCards(
-                pendingOrders.length,
-                preparingOrders.length,
-                preparedOrders.length,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 800),
+              child: ListView(
+                padding: EdgeInsets.all(16),
+                children: [
+                  _buildSummaryCards(
+                    pendingOrders.length,
+                    preparingOrders.length,
+                    preparedOrders.length,
+                  ),
+                  SizedBox(height: 20),
+                  if (preparedOrders.isNotEmpty)
+                    _buildExpandableSection(
+                      'Ready to Serve',
+                      preparedOrders.length,
+                      Colors.green,
+                      'ready',
+                      preparedOrders,
+                    ),
+                  if (preparingOrders.isNotEmpty)
+                    _buildExpandableSection(
+                      'Preparing',
+                      preparingOrders.length,
+                      Colors.orange,
+                      'preparing',
+                      preparingOrders,
+                    ),
+                  if (pendingOrders.isNotEmpty)
+                    _buildExpandableSection(
+                      'New Orders',
+                      pendingOrders.length,
+                      Colors.red,
+                      'pending',
+                      pendingOrders,
+                    ),
+                ],
               ),
-              SizedBox(height: 20),
-              if (preparedOrders.isNotEmpty)
-                _buildExpandableSection(
-                  'Ready to Serve',
-                  preparedOrders.length,
-                  Colors.green,
-                  'ready',
-                  preparedOrders,
-                ),
-              if (preparingOrders.isNotEmpty)
-                _buildExpandableSection(
-                  'Preparing',
-                  preparingOrders.length,
-                  Colors.orange,
-                  'preparing',
-                  preparingOrders,
-                ),
-              if (pendingOrders.isNotEmpty)
-                _buildExpandableSection(
-                  'New Orders',
-                  pendingOrders.length,
-                  Colors.red,
-                  'pending',
-                  pendingOrders,
-                ),
-            ],
+            ),
           ),
         );
       },
@@ -1021,52 +1026,57 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
             setState(() {});
             await Future.delayed(Duration(milliseconds: 500));
           },
-          child: ListView(
-            padding: EdgeInsets.all(16),
-            children: [
-              Row(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 800),
+              child: ListView(
+                padding: EdgeInsets.all(16),
                 children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Unpaid',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryCard(
+                          'Unpaid',
+                          unpaidOrders.length,
+                          Colors.blue,
+                          Icons.money_off,
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          'Paid',
+                          paidOrders.length,
+                          Colors.green,
+                          Icons.payment,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+
+                  // Put Unpaid Orders first
+                  if (unpaidOrders.isNotEmpty)
+                    _buildExpandableCompletedSection(
+                      'Unpaid Orders',
                       unpaidOrders.length,
                       Colors.blue,
-                      Icons.money_off,
+                      'unpaid',
+                      unpaidOrders,
                     ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      'Paid',
+
+                  // Then Paid Orders
+                  if (paidOrders.isNotEmpty)
+                    _buildExpandableCompletedSection(
+                      'Paid Orders',
                       paidOrders.length,
                       Colors.green,
-                      Icons.payment,
+                      'paid',
+                      paidOrders,
                     ),
-                  ),
                 ],
               ),
-              SizedBox(height: 20),
-
-              // Put Unpaid Orders first
-              if (unpaidOrders.isNotEmpty)
-                _buildExpandableCompletedSection(
-                  'Unpaid Orders',
-                  unpaidOrders.length,
-                  Colors.blue,
-                  'unpaid',
-                  unpaidOrders,
-                ),
-
-              // Then Paid Orders
-              if (paidOrders.isNotEmpty)
-                _buildExpandableCompletedSection(
-                  'Paid Orders',
-                  paidOrders.length,
-                  Colors.green,
-                  'paid',
-                  paidOrders,
-                ),
-            ],
+            ),
           ),
         );
       },

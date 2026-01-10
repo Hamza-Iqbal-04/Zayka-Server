@@ -206,9 +206,14 @@ class _LoginScreenState extends State<LoginScreen>
           AnimatedBuilder(
             animation: _shakeAnimation,
             builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(_shakeAnimation.value, 0),
-                child: _buildLoginCard(),
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 450),
+                  child: Transform.translate(
+                    offset: Offset(_shakeAnimation.value, 0),
+                    child: _buildLoginCard(),
+                  ),
+                ),
               );
             },
           ),
