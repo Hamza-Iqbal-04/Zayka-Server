@@ -10,6 +10,9 @@ import 'ActiveOrderScreen.dart';
 import '../Firebase/FirestoreService.dart';
 import 'OrderDetailScreen.dart';
 import '../main.dart';
+import 'package:provider/provider.dart';
+import '../Providers/UserProvider.dart';
+import 'ProfileScreen.dart';
 
 class TablesScreen extends StatefulWidget {
   @override
@@ -62,18 +65,54 @@ class _TablesScreenState extends State<TablesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final branchId = userProvider.currentBranch;
+
+    if (userProvider.isLoading) {
+      return _buildLoadingState();
+    }
+
+    if (branchId == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning, size: 64, color: Colors.orange),
+            SizedBox(height: 16),
+            Text("No Branch Assigned"),
+            SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                // Retry by re-fetching profile? Or just logout
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ProfileScreen()),
+                );
+              },
+              child: Text("Go to Profile"),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: Container(
         color: Color(0xFFF5F6F8),
         child: StreamBuilder<DocumentSnapshot>(
-          stream: _firestore.collection('Branch').doc('Mansoura').snapshots(),
+          stream: _firestore.collection('Branch').doc(branchId).snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return _buildErrorState();
             }
 
             if (!snapshot.hasData || !snapshot.data!.exists) {
-              return _buildLoadingState();
+              // Only return loading if we are truly waiting,
+              // if it doesn't exist it might be a configured branch issue
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildLoadingState();
+              }
+              return Center(child: Text("Branch '$branchId' not found."));
             }
 
             final branchData = snapshot.data!.data() as Map<String, dynamic>;
@@ -211,7 +250,7 @@ class _TablesScreenState extends State<TablesScreen>
                 Icon(Icons.store_rounded, color: primaryColor, size: 14),
                 SizedBox(width: 4),
                 Text(
-                  'Branch: Mansoura',
+                  'Branch: ${Provider.of<UserProvider>(context).currentBranch ?? "Unknown"}',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 12,
@@ -257,39 +296,21 @@ class _TablesScreenState extends State<TablesScreen>
             );
           },
         ),
-        PopupMenuButton<String>(
-          icon: Icon(
-            Icons.more_vert_rounded,
-            color: Colors.grey[800],
-            size: 26,
-          ),
-          offset: Offset(0, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onSelected: (value) {
-            if (value == 'logout') {
-              _showLogoutDialog(context);
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'logout',
-              child: Row(
-                children: [
-                  Icon(Icons.logout_rounded, color: Colors.red, size: 20),
-                  SizedBox(width: 12),
-                  Text(
-                    'Sign Out',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
+        IconButton(
+          icon: Container(
+            padding: EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: primaryColor, width: 2),
             ),
-          ],
+            child: Icon(Icons.person, color: primaryColor, size: 20),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ProfileScreen()),
+            );
+          },
         ),
         SizedBox(width: 8),
       ],
@@ -865,48 +886,6 @@ class _TablesScreenState extends State<TablesScreen>
     _refreshController.reset();
     HapticFeedback.mediumImpact();
   }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.logout_rounded, color: Colors.red[600]),
-            SizedBox(width: 12),
-            Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to sign out? You will need to log in again to access the app.',
-          style: TextStyle(color: Colors.grey[700]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              FirebaseAuth.instance.signOut();
-              HapticFeedback.mediumImpact();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class OrderScreen extends StatefulWidget {
@@ -999,16 +978,18 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   void _setupListeners() {
-    // Single listener for table status
-    _tableStatusSubscription = FirestoreService.getBranchStream().listen((
-      snapshot,
-    ) {
-      if (snapshot.exists && mounted) {
-        _handleBranchUpdate(snapshot);
-      }
-    });
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final branchId = userProvider.currentBranch;
 
-    // Listen to existing order if needed
+    if (branchId != null) {
+      _tableStatusSubscription = FirestoreService.getBranchStream(branchId)
+          .listen((snapshot) {
+            if (snapshot.exists && mounted) {
+              _handleBranchUpdate(snapshot);
+            }
+          });
+    }
+
     if (_currentOrderId != null) {
       _listenToExistingOrder();
     }
@@ -1079,7 +1060,16 @@ class _OrderScreenState extends State<OrderScreen> {
         );
         _showSuccessSnackbar('Items added to order successfully!');
       } else {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final branchId = userProvider.currentBranch;
+
+        if (branchId == null) {
+          _showErrorSnackbar('Branch ID not found');
+          return;
+        }
+
         final newOrderId = await FirestoreService.createDineInOrder(
+          branchId: branchId,
           tableNumber: widget.tableNumber,
           items: _cartItems,
           totalAmount: _totalAmount,
@@ -1126,12 +1116,18 @@ class _OrderScreenState extends State<OrderScreen> {
             (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
         final orderType = orderData['Order_type']?.toString() ?? 'dine_in';
 
-        await FirestoreService.processPayment(
-          orderId: _currentOrderId ?? widget.tableData['currentOrderId']!,
-          paymentMethod: paymentMethod,
-          amount: totalAmount,
-          tableNumber: orderType == 'dine_in' ? widget.tableNumber : null,
-        );
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final branchId = userProvider.currentBranch;
+
+        if (branchId != null) {
+          await FirestoreService.processPayment(
+            branchId: branchId,
+            orderId: _currentOrderId ?? widget.tableData['currentOrderId']!,
+            paymentMethod: paymentMethod,
+            amount: totalAmount,
+            tableNumber: orderType == 'dine_in' ? widget.tableNumber : null,
+          );
+        }
 
         // Reset local state
         setState(() {
@@ -1164,8 +1160,14 @@ class _OrderScreenState extends State<OrderScreen> {
     setState(() => _isToggling = true);
 
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId == null) return;
+
       if (_tableStatus == 'available') {
         await FirestoreService.updateTableStatus(
+          branchId,
           widget.tableNumber,
           'occupied',
         );
@@ -1188,7 +1190,16 @@ class _OrderScreenState extends State<OrderScreen> {
 
   Future<void> _markTableAvailable() async {
     try {
-      await FirestoreService.updateTableStatus(widget.tableNumber, 'available');
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId != null) {
+        await FirestoreService.updateTableStatus(
+          branchId,
+          widget.tableNumber,
+          'available',
+        );
+      }
       await FirestoreService.clearCart(widget.tableNumber);
 
       // Reset local state
@@ -1287,13 +1298,23 @@ class _OrderScreenState extends State<OrderScreen> {
     setState(() => _isLoadingCategories = true);
 
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId == null) {
+        setState(() => _isLoadingCategories = false);
+        return;
+      }
+
       // Load categories
       final categoriesSnapshot = await _firestore
           .collection('menu_categories')
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .where('isActive', isEqualTo: true)
           .orderBy('sortOrder')
           .get();
+
+      if (!mounted) return;
 
       setState(() {
         _categories = categoriesSnapshot.docs
@@ -1315,7 +1336,9 @@ class _OrderScreenState extends State<OrderScreen> {
       });
     } catch (e) {
       print('Error loading categories: $e');
-      setState(() => _isLoadingCategories = false);
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
     }
   }
 
@@ -1326,6 +1349,7 @@ class _OrderScreenState extends State<OrderScreen> {
       _occupiedTime ??= DateTime.now();
 
       _timer = Timer.periodic(Duration(seconds: 1), (_) {
+        if (!mounted) return;
         final now = DateTime.now();
         setState(() {
           _elapsed = now.difference(_occupiedTime!);
@@ -1414,7 +1438,9 @@ class _OrderScreenState extends State<OrderScreen> {
         );
       },
     ).then((_) {
-      setState(() => _isToggling = false);
+      if (mounted) {
+        setState(() => _isToggling = false);
+      }
     });
   }
 
@@ -1953,11 +1979,18 @@ class _OrderScreenState extends State<OrderScreen> {
       return Center(child: CircularProgressIndicator());
     }
 
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final branchId = userProvider.currentBranch;
+
+    if (branchId == null) {
+      return Center(child: Text('Please select a branch'));
+    }
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('menu_items')
           .where('isAvailable', isEqualTo: true)
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -2911,14 +2944,6 @@ class _OrderScreenState extends State<OrderScreen> {
       _calculateTotal();
       _saveCartItems();
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added to cart successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   void _updateQuantity(int index, int change) {

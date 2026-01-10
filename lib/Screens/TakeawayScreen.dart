@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../Providers/UserProvider.dart';
 
 class TakeawayOrderScreen extends StatefulWidget {
   @override
@@ -69,9 +71,13 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
     setState(() => _isLoadingCategories = true);
 
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+      if (branchId == null) return;
+
       final categoriesSnapshot = await _firestore
           .collection('menu_categories')
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .where('isActive', isEqualTo: true)
           .orderBy('sortOrder')
           .get();
@@ -150,7 +156,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
                 Icon(Icons.store_outlined, size: 16, color: Colors.grey[600]),
                 SizedBox(width: 4),
                 Text(
-                  'Mansoura',
+                  Provider.of<UserProvider>(context).currentBranch ?? 'Unknown',
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
@@ -437,11 +443,16 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
       return Center(child: CircularProgressIndicator());
     }
 
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final branchId = userProvider.currentBranch;
+
+    if (branchId == null) return Center(child: Text("No Branch Selected"));
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('menu_items')
           .where('isAvailable', isEqualTo: true)
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -1587,14 +1598,6 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
       }
       _calculateTotal();
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added to cart successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 
   void _updateQuantity(int index, int change) {
@@ -1764,6 +1767,15 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
 
       final dailyOrderNumber = ordersToday.size + 1;
 
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId == null) {
+        throw Exception(
+          'No branch selected. Please restart the app or contact support.',
+        );
+      }
+
       // Use transaction for order creation
       await _firestore.runTransaction((transaction) async {
         final orderRef = _firestore.collection('Orders').doc();
@@ -1779,7 +1791,7 @@ class _TakeawayOrderScreenState extends State<TakeawayOrderScreen> {
           'paymentStatus': 'unpaid',
           'timestamp': FieldValue.serverTimestamp(),
           'dailyOrderNumber': dailyOrderNumber,
-          'branchIds': ['Mansoura'],
+          'branchIds': [branchId],
           'estimatedReadyTime': _calculateEstimatedTime(),
         };
 

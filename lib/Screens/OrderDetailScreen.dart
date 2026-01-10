@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Firebase/FirestoreService.dart';
+import 'package:provider/provider.dart';
+import '../Providers/UserProvider.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   // Accept an untyped DocumentSnapshot so both query docs and single-get docs work.
@@ -895,7 +897,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _markAsPreparing() async {
     setState(() => _isUpdating = true);
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+      if (branchId == null) return;
+
       await FirestoreService.updateOrderStatusWithTable(
+        branchId,
         widget.order.id,
         'preparing',
       );
@@ -913,7 +920,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _markAsPrepared() async {
     setState(() => _isUpdating = true);
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+      if (branchId == null) return;
+
       await FirestoreService.updateOrderStatusWithTable(
+        branchId,
         widget.order.id,
         'prepared',
       );
@@ -935,11 +947,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           (widget.order.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
       final tableNumber = orderData['tableNumber']?.toString();
 
-      await FirestoreService.updateOrderStatusWithTable(
-        widget.order.id,
-        'served',
-        tableNumber: orderType == 'dine_in' ? tableNumber : null,
-      );
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+      if (branchId == null) return;
+
+      final userProvider2 = Provider.of<UserProvider>(context, listen: false);
+      final branchId2 = userProvider2.currentBranch;
+
+      if (branchId2 != null) {
+        await FirestoreService.updateOrderStatusWithTable(
+          branchId2,
+          widget.order.id,
+          'served',
+          tableNumber: orderType == 'dine_in' ? tableNumber : null,
+        );
+      }
 
       _showSuccessSnackbar(
         orderType == 'takeaway'
@@ -967,12 +989,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       final totalAmount = (orderData['totalAmount'] as num?)?.toDouble() ?? 0.0;
       final tableNumber = orderData['tableNumber']?.toString();
 
-      await FirestoreService.processPayment(
-        orderId: widget.order.id,
-        paymentMethod: paymentMethod,
-        amount: totalAmount,
-        tableNumber: orderType == 'dine_in' ? tableNumber : null,
-      );
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+      if (branchId == null) return;
+
+      final userProvider2 = Provider.of<UserProvider>(context, listen: false);
+      final branchId2 = userProvider2.currentBranch;
+
+      if (branchId2 != null) {
+        await FirestoreService.processPayment(
+          branchId: branchId2,
+          orderId: widget.order.id,
+          paymentMethod: paymentMethod,
+          amount: totalAmount,
+          tableNumber: orderType == 'dine_in' ? tableNumber : null,
+        );
+      }
 
       _showSuccessSnackbar(
         'Payment processed successfully with ${paymentMethod.toUpperCase()}!',
@@ -1056,10 +1088,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           tableUpdate['Tables.$tableNumber.currentOrderId'] =
               FieldValue.delete();
 
-          await FirebaseFirestore.instance
-              .collection('Branch')
-              .doc('Mansoura')
-              .update(tableUpdate);
+          final userProvider = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          );
+          final branchId = userProvider.currentBranch;
+
+          if (branchId != null) {
+            await FirebaseFirestore.instance
+                .collection('Branch')
+                .doc(branchId)
+                .update(tableUpdate);
+          }
         }
       }
 

@@ -16,13 +16,20 @@ import 'package:vibration/vibration.dart';
 import 'Screens/OrderDetailScreen.dart';
 import 'Firebase/FirestoreService.dart';
 
+import 'package:provider/provider.dart'; // Add provider import
+import 'Providers/UserProvider.dart'; // Add UserProvider import
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // required for FlutterFire
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      child: MyApp(),
+    ),
   );
-  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -42,9 +49,14 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -55,6 +67,20 @@ class AuthWrapper extends StatelessWidget {
           if (user == null) {
             return LoginScreen();
           }
+
+          // Fetch profile when user is authenticated
+          // Using addPostFrameCallback to avoid state errors during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Only fetch if not already loaded or if different user
+            final userProvider = Provider.of<UserProvider>(
+              context,
+              listen: false,
+            );
+            if (userProvider.userProfile == null && user.email != null) {
+              userProvider.fetchUserProfile(user.email!);
+            }
+          });
+
           return MainWaiterApp();
         }
         return Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -75,12 +101,27 @@ class _MainWaiterAppState extends State<MainWaiterApp>
   final AudioPlayer _audioPlayer = AudioPlayer();
   final Set<String> _shownPreparedOrders = {};
   StreamSubscription<QuerySnapshot>? _ordersSubscription;
+  String? _currentBranchId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _startListeningForPreparedOrders();
+    // Subscription handling moved to didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userProvider = Provider.of<UserProvider>(context);
+    final newBranchId = userProvider.currentBranch;
+
+    if (newBranchId != _currentBranchId) {
+      _currentBranchId = newBranchId;
+      if (_currentBranchId != null) {
+        _startListeningForPreparedOrders(_currentBranchId!);
+      }
+    }
   }
 
   @override
@@ -98,15 +139,13 @@ class _MainWaiterAppState extends State<MainWaiterApp>
     }
   }
 
-  void _startListeningForPreparedOrders() {
+  void _startListeningForPreparedOrders(String branchId) {
+    _ordersSubscription?.cancel();
     // Listen for ALL orders that are 'prepared'
     // This allows us to catch updates globally
     _ordersSubscription = FirebaseFirestore.instance
         .collection('Orders')
-        .where(
-          'branchIds',
-          arrayContains: 'Mansoura',
-        ) // Filter by branch if needed
+        .where('branchIds', arrayContains: branchId)
         .where('status', isEqualTo: 'prepared')
         .snapshots()
         .listen((snapshot) {
@@ -453,11 +492,17 @@ class _MainWaiterAppState extends State<MainWaiterApp>
           .get();
       final tableNumber = doc.data()?['tableNumber']?.toString();
 
-      await FirestoreService.updateOrderStatusWithTable(
-        orderId,
-        'served',
-        tableNumber: orderType == 'dine_in' ? tableNumber : null,
-      );
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId != null) {
+        await FirestoreService.updateOrderStatusWithTable(
+          branchId,
+          orderId,
+          'served',
+          tableNumber: orderType == 'dine_in' ? tableNumber : null,
+        );
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -497,13 +542,18 @@ class _MainWaiterAppState extends State<MainWaiterApp>
       // I'll stick to direct update to 'paid' via FirestoreService helper if I can't port the full bottom sheet UI easily.
       // Wait, I can iterate. I'll just do the update.
 
-      await FirestoreService.processPayment(
-        orderId: orderId,
-        paymentMethod:
-            'cash', // Defaulting to cash for quick button, or could be 'quick_pay'
-        amount: amount,
-        tableNumber: orderType == 'dine_in' ? tableNumber : null,
-      );
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId != null) {
+        await FirestoreService.processPayment(
+          branchId: branchId,
+          orderId: orderId,
+          paymentMethod: 'cash', // Defaulting to cash for quick button
+          amount: amount,
+          tableNumber: orderType == 'dine_in' ? tableNumber : null,
+        );
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

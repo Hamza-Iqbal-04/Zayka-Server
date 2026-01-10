@@ -2,6 +2,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'OrderDetailScreen.dart';
+import 'package:provider/provider.dart';
+import '../Providers/UserProvider.dart';
 
 class ActiveOrdersScreen extends StatefulWidget {
   @override
@@ -969,10 +971,16 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
 
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final branchId = userProvider.currentBranch;
+
+    if (branchId == null)
+      return Container(); // Should handle better but for now
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
           .collection('Orders')
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .where('status', whereIn: ['paid', 'served'])
           .where(
             'timestamp',
@@ -1067,9 +1075,14 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen>
 
   Stream<QuerySnapshot> _getOrdersStream(String orderType) {
     try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final branchId = userProvider.currentBranch;
+
+      if (branchId == null) return Stream.empty();
+
       Query query = _firestore
           .collection('Orders')
-          .where('branchIds', arrayContains: 'Mansoura')
+          .where('branchIds', arrayContains: branchId)
           .where('status', whereIn: ['pending', 'preparing', 'prepared']);
       if (orderType != 'all') {
         query = query.where('Order_type', isEqualTo: orderType);

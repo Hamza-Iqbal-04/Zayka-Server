@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _branchId = 'Mansoura';
 
   // Table Operations
   static Future<void> updateTableStatus(
+    String branchId,
     String tableNumber,
     String status, {
     String? currentOrderId,
@@ -22,11 +22,12 @@ class FirestoreService {
       updateData['Tables.$tableNumber.currentOrderId'] = FieldValue.delete();
     }
 
-    await _firestore.collection('Branch').doc(_branchId).update(updateData);
+    await _firestore.collection('Branch').doc(branchId).update(updateData);
   }
 
   // Order Operations with Transactions
   static Future<String> createDineInOrder({
+    required String branchId,
     required String tableNumber,
     required List<Map<String, dynamic>> items,
     required double totalAmount,
@@ -56,14 +57,14 @@ class FirestoreService {
         'paymentStatus': 'unpaid',
         'timestamp': FieldValue.serverTimestamp(),
         'dailyOrderNumber': dailyOrderNumber,
-        'branchIds': [_branchId],
+        'branchIds': [branchId],
       };
 
       // Set order data
       transaction.set(orderRef, orderData);
 
       // Update table status
-      final branchRef = _firestore.collection('Branch').doc(_branchId);
+      final branchRef = _firestore.collection('Branch').doc(branchId);
       transaction.update(branchRef, {
         'Tables.$tableNumber.status': 'ordered',
         'Tables.$tableNumber.currentOrderId': orderRef.id,
@@ -110,6 +111,7 @@ class FirestoreService {
   }
 
   static Future<void> updateOrderStatusWithTable(
+    String branchId,
     String orderId,
     String status, {
     String? tableNumber,
@@ -123,7 +125,7 @@ class FirestoreService {
 
       // Update table status if provided
       if (tableNumber != null) {
-        final branchRef = _firestore.collection('Branch').doc(_branchId);
+        final branchRef = _firestore.collection('Branch').doc(branchId);
         String tableStatus = 'occupied';
         if (status == 'prepared') tableStatus = 'ordered';
         if (status == 'served') tableStatus = 'occupied';
@@ -138,6 +140,7 @@ class FirestoreService {
   }
 
   static Future<void> processPayment({
+    required String branchId,
     required String orderId,
     required String paymentMethod,
     required double amount,
@@ -155,7 +158,7 @@ class FirestoreService {
 
       // Clear table if dine-in order
       if (tableNumber != null) {
-        final branchRef = _firestore.collection('Branch').doc(_branchId);
+        final branchRef = _firestore.collection('Branch').doc(branchId);
         transaction.update(branchRef, {
           'Tables.$tableNumber.status': 'available',
           'Tables.$tableNumber.currentOrderId': FieldValue.delete(),
@@ -232,18 +235,21 @@ class FirestoreService {
   }
 
   // Stream Getters
-  static Stream<DocumentSnapshot> getBranchStream() {
-    return _firestore.collection('Branch').doc(_branchId).snapshots();
+  static Stream<DocumentSnapshot> getBranchStream(String branchId) {
+    return _firestore.collection('Branch').doc(branchId).snapshots();
   }
 
   static Stream<DocumentSnapshot> getOrderStream(String orderId) {
     return _firestore.collection('Orders').doc(orderId).snapshots();
   }
 
-  static Stream<QuerySnapshot> getActiveOrdersStream(String orderType) {
+  static Stream<QuerySnapshot> getActiveOrdersStream(
+    String branchId,
+    String orderType,
+  ) {
     Query query = _firestore
         .collection('Orders')
-        .where('branchIds', arrayContains: _branchId)
+        .where('branchIds', arrayContains: branchId)
         .where('status', whereIn: ['pending', 'preparing', 'prepared']);
 
     if (orderType != 'all') {
