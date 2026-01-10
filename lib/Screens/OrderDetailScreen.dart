@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'FirestoreService.dart';
+import '../Firebase/FirestoreService.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   // Accept an untyped DocumentSnapshot so both query docs and single-get docs work.

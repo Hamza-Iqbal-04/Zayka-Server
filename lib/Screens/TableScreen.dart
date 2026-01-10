@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'ActiveOrderScreen.dart';
-import 'FirestoreService.dart';
+import '../Firebase/FirestoreService.dart';
 import 'OrderDetailScreen.dart';
-import 'main.dart';
+import '../main.dart';
 
 class TablesScreen extends StatefulWidget {
   @override

@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
-import 'ActiveOrderScreen.dart';
-import 'LoginScreen.dart';
-import 'TableScreen.dart';
-import 'TakeawayScreen.dart';
-import 'firebase_options.dart';
+import 'Screens/ActiveOrderScreen.dart';
+import 'Screens/LoginScreen.dart';
+import 'Screens/TableScreen.dart';
+import 'Screens/TakeawayScreen.dart';
+import 'Firebase/firebase_options.dart';
 // Listener imports
 import 'package:audioplayers/audioplayers.dart'; // v5.0.0
 import 'package:vibration/vibration.dart';
-import 'OrderDetailScreen.dart';
-import 'FirestoreService.dart';
+import 'Screens/OrderDetailScreen.dart';
+import 'Firebase/FirestoreService.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
